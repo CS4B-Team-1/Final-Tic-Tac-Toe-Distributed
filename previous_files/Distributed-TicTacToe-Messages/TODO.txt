@@ -1,0 +1,12 @@
+- Add in the messages we already created into the PlayerMain client's instanceof checking
+- UI
+
+- JOBS:
+
+- Create a GameController client that connects to router and can receive "game/*" channel messages (and send to correct places later) : anthony
+- "Create Game" flow created : brayden
+- "Join Game" flow finished (hook up to GameController, etc) : kyle 
+- "Gameplay Loop" finished : mitch
+- "Game End" finished : xandro
+
+note: for people making flows, add a way to "see" the flow in the UI of the player client (PlayerMain.java)
