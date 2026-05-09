@@ -1,4 +1,4 @@
-package controller;
+package project.player.controller;
 
 
 import javafx.event.Event;

@@ -1,5 +1,4 @@
-package controller;
-import players.Computer;
+package project.player.controller;
 
 import java.util.ArrayList;
 
@@ -16,7 +15,6 @@ import javafx.stage.Stage;
 public class BoardController {
 
     ArrayList<Integer> boardGrid;
-    Computer computerPlayer;
     boolean isOnePlayerGame = true;
 
     @FXML
@@ -52,7 +50,6 @@ public class BoardController {
         for (int i = 0; i < GRID_SIZE; i++) {
             boardGrid.add(0);
         }
-        this.computerPlayer = new Computer(new ArrayList<>(this.boardGrid), this.IS_COMPUTER_MAXIMIZER);
     }
 
     public void setIsOnePlayerGame(boolean isOnePlayerGame) {
@@ -66,16 +63,18 @@ public class BoardController {
 
             int buttonMove = 0;
 
-            if (this.computerPlayer.isMaximizer()){
+            // TODO: rework or remove
+            if (true){
                 computerMove = PLAYER_X;
                 color = Color.RED;
                 buttonMove = 1;
-            }else{
-                computerMove = PLAYER_O;
-                color = Color.BLUE;
-                buttonMove = -1;
-
             }
+            // else{
+            //     computerMove = PLAYER_O;
+            //     color = Color.BLUE;
+            //     buttonMove = -1;
+
+            // }
 
             //Update Gui
             switch(index) {
@@ -247,7 +246,7 @@ public class BoardController {
                 Stage outcomePopup = new Stage();
                 outcomePopup.initModality(Modality.APPLICATION_MODAL); // locks application, forces user to exit window before continuing
                 // create FXML loader object to load
-                FXMLLoader outcomeLoader = new FXMLLoader(getClass().getResource("..\\OutcomePopup.fxml"));
+                FXMLLoader outcomeLoader = new FXMLLoader(getClass().getResource("..\\fxml\\OutcomePopup.fxml"));
                 // load FXML onto Scene
                 outcomePopup.setScene(new Scene(outcomeLoader.load()));
 
@@ -384,9 +383,10 @@ public class BoardController {
         }
     }
 
+    // TODO: remove
     public void computerTurn() {
         // create the computer
-        int move = this.computerPlayer.getBestMove(new ArrayList<>(this.boardGrid));
+        int move = 0;
         this.updateGUI(move);
 
     }
