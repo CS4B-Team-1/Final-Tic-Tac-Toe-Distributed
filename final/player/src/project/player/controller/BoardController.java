@@ -1,5 +1,6 @@
 package project.player.controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import javafx.fxml.FXML;
@@ -11,8 +12,21 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import project.client.MessageListener;
+import project.client.RouterClient;
+import project.protocol.Message;
+import project.protocol.Move;
+import project.protocol.MoveAcceptedMessage;
+import project.protocol.MoveRejectedMessage;
 
 public class BoardController {
+
+    private RouterClient client;
+
+    // TODO: rework to not be default
+    private String playerSymbol = this.PLAYER_X;
+    private String currentTurn = this.PLAYER_X;
+    private String playerId;
 
     ArrayList<Integer> boardGrid;
     boolean isOnePlayerGame = true;
@@ -40,91 +54,130 @@ public class BoardController {
 
     private final int GRID_SIZE = 9; 
     private final String PLAYER_X = "X";
-    private final String PLAYER_O = "O"; 
-    private final boolean IS_COMPUTER_MAXIMIZER = false;
+    private final String PLAYER_O = "O";
+    private final String GAME_CHANNEL = "/game/";
+
     
     //Constructor
     public BoardController() {
-        boardGrid = new ArrayList<Integer>();
-        // Set all boardGrid to empty
-        for (int i = 0; i < GRID_SIZE; i++) {
-            boardGrid.add(0);
+        // TODO: remove when client is able to be passed to BoardController
+        this.client = new RouterClient("localhost", 4000);
+        try {
+            client.connect();
+
+            MessageListener listener = (channel, senderId, message) -> {
+                // TODO: remove possibly?
+                System.out.println("[" + senderId + "] message received");
+                System.out.println("Channel: " + channel);
+                System.out.println("Sender: " + senderId);
+                System.out.println("Message type: " + message.getClass().getSimpleName());
+
+                if (message instanceof MoveAcceptedMessage move) {
+                    handleMoveAccepted(move);
+                } else if (message instanceof MoveRejectedMessage move) {
+                    // TODO: update board with error message
+                } else {
+                    System.out.println("Message: " + message);
+                }
+                System.out.println();
+            };
+
+            //client.subscribe(GAME_CHANNEL + this.gameId, listener);
+
+            boardGrid = new ArrayList<Integer>();
+            // Set all boardGrid to empty
+            for (int i = 0; i < GRID_SIZE; i++) {
+                boardGrid.add(0);
+            }
+        } catch (IOException e) {
+            System.err.println("BoardController client could not connect to the server");
+            e.printStackTrace();
         }
     }
 
-    public void setIsOnePlayerGame(boolean isOnePlayerGame) {
-        this.isOnePlayerGame = isOnePlayerGame;
+    private void handleMoveAccepted(MoveAcceptedMessage message) {
+        // TODO: update the tile from the given move
+        int index = Move.toIndex(message.getRow(), message.getCol());
+        String symbol = "";
+
+        if (message.getPlayerId() != this.playerId) {
+            if (this.playerSymbol == PLAYER_X) {
+                symbol = PLAYER_O;
+            } else {
+                symbol = PLAYER_X;
+            }
+        } else symbol = this.playerSymbol;
+
+        updateGUI(index, symbol);
+
+        // TODO: handle winning
+
+        // TODO: update the Current Turn field
+        System.out.println("Now " + message.getNextTurn() + "'s turn.");
     }
 
     //Updates the GUI and board after the computer has made a move.
-    private void updateGUI(int index) {
-            String computerMove = "";
+    private void updateGUI(int index, String symbol) {
             Color color;
-
             int buttonMove = 0;
 
-            // TODO: rework or remove
-            if (true){
-                computerMove = PLAYER_X;
+            if (symbol == PLAYER_X){
                 color = Color.RED;
                 buttonMove = 1;
+            }else{
+                color = Color.BLUE;
+                buttonMove = -1;
             }
-            // else{
-            //     computerMove = PLAYER_O;
-            //     color = Color.BLUE;
-            //     buttonMove = -1;
-
-            // }
 
             //Update Gui
             switch(index) {
                 case 0:
-                    topLeft.setText(computerMove);
+                    topLeft.setText(symbol);
                     topLeft.setTextFill(color);
                     topLeft.setMouseTransparent(true);
                     break;
                 case 1:
-                    topCenter.setText(computerMove);
+                    topCenter.setText(symbol);
                     topCenter.setTextFill(color);
                     topCenter.setMouseTransparent(true);
                     break;
                 case 2:
-                    topRight.setText(computerMove);
+                    topRight.setText(symbol);
                     topRight.setTextFill(color);
                     topRight.setMouseTransparent(true);
                     break;
                 case 3:
-                    middleLeft.setText(computerMove);
+                    middleLeft.setText(symbol);
                     middleLeft.setTextFill(color);
                     middleLeft.setMouseTransparent(true);
                     break;
                 case 4:
-                    middleCenter.setText(computerMove);
+                    middleCenter.setText(symbol);
                     middleCenter.setTextFill(color);
                     middleCenter.setMouseTransparent(true);
                     break;
                 case 5:
-                    middleRight.setText(computerMove);
+                    middleRight.setText(symbol);
                     middleRight.setTextFill(color);
                     middleRight.setMouseTransparent(true);
                     break;
                 case 6:
-                    bottomLeft.setText(computerMove);
+                    bottomLeft.setText(symbol);
                     bottomLeft.setTextFill(color);
                     bottomLeft.setMouseTransparent(true);
                     break;
                 case 7:
-                    bottomCenter.setText(computerMove);
+                    bottomCenter.setText(symbol);
                     bottomCenter.setTextFill(color);
                     bottomCenter.setMouseTransparent(true);
                     break;
                 case 8:
-                    bottomRight.setText(computerMove);
+                    bottomRight.setText(symbol);
                     bottomRight.setTextFill(color);
                     bottomRight.setMouseTransparent(true);
                     break;
                 default:
-                    System.out.println("Invalid computer move index");
+                    System.err.println("Invalid move index");
             }
 
             // Update Back End Board Grid
@@ -157,7 +210,7 @@ public class BoardController {
                     boardGrid.set(index, buttonMove);
                     break;
                 default:
-                    System.out.println("Invalid computer move index");
+                    System.err.println("Invalid move index");
             }
 
             // Increment spaces used up for winnerCheck()
@@ -238,7 +291,7 @@ public class BoardController {
 
     //Checks if there is a winner and if there is a winner or a tie it will diplay a popup on weather either happened and when the popup is closed it resets the board.
     public void dispayWinnerCheck(){
-        String outcomeString = winnerCheck();
+        String outcomeString = "Display Winner";
 
         if (outcomeString != null) {
             try { 
@@ -267,6 +320,7 @@ public class BoardController {
         }
     }
 
+    /*
     //Checks if there is a winner or tie game and returns null if neither is the case.
     private String winnerCheck() {
         // check all rows
@@ -353,9 +407,12 @@ public class BoardController {
         // if all checks fail, return null
         return null;
     }
+    */
 
     // resets the board by setting all button text to blank and number of active tiles to 0.
     private void resetBoard() {
+
+        /*
         topLeft.setText("");
         topCenter.setText("");
         topRight.setText("");
@@ -381,6 +438,7 @@ public class BoardController {
         for (int i = 0; i < GRID_SIZE; i++) {
             boardGrid.set(i, 0);
         }
+        */
     }
 
     // TODO: remove
