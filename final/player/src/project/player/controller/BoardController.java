@@ -27,6 +27,7 @@ public class BoardController {
     private String playerSymbol = this.PLAYER_X;
     private String currentTurn = this.PLAYER_X;
     private String playerId;
+    private String gameId;
 
     ArrayList<Integer> boardGrid;
     boolean isOnePlayerGame = true;
@@ -60,7 +61,7 @@ public class BoardController {
     
     //Constructor
     public BoardController() {
-        // TODO: remove when client is able to be passed to BoardController
+        // TODO: remove when client is able to be passed to BoardController, set gameId and playerId
         this.client = new RouterClient("localhost", 4000);
         try {
             client.connect();
@@ -110,7 +111,7 @@ public class BoardController {
 
         updateGUI(index, symbol);
 
-        // TODO: handle winning
+        // TODO: handle game ending
 
         // TODO: update the Current Turn field
         System.out.println("Now " + message.getNextTurn() + "'s turn.");
@@ -123,10 +124,10 @@ public class BoardController {
 
             if (symbol == PLAYER_X){
                 color = Color.RED;
-                buttonMove = 1;
+                //buttonMove = 1;
             }else{
                 color = Color.BLUE;
-                buttonMove = -1;
+                //buttonMove = -1;
             }
 
             //Update Gui
@@ -180,41 +181,39 @@ public class BoardController {
                     System.err.println("Invalid move index");
             }
 
+            // TODO: remove
             // Update Back End Board Grid
-            switch(index) {
-                case 0:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 1:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 2:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 3:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 4:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 5:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 6:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 7:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 8:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                default:
-                    System.err.println("Invalid move index");
-            }
-
-            // Increment spaces used up for winnerCheck()
-            numActiveTiles++; // Not checking if its an overwrite or not.
+            // switch(index) {
+            //     case 0:
+            //         boardGrid.set(index, buttonMove);
+            //         break;
+            //     case 1:
+            //         boardGrid.set(index, buttonMove);
+            //         break;
+            //     case 2:
+            //         boardGrid.set(index, buttonMove);
+            //         break;
+            //     case 3:
+            //         boardGrid.set(index, buttonMove);
+            //         break;
+            //     case 4:
+            //         boardGrid.set(index, buttonMove);
+            //         break;
+            //     case 5:
+            //         boardGrid.set(index, buttonMove);
+            //         break;
+            //     case 6:
+            //         boardGrid.set(index, buttonMove);
+            //         break;
+            //     case 7:
+            //         boardGrid.set(index, buttonMove);
+            //         break;
+            //     case 8:
+            //         boardGrid.set(index, buttonMove);
+            //         break;
+            //     default:
+            //         System.err.println("Invalid move index");
+            // }
 
     }
 
@@ -291,6 +290,7 @@ public class BoardController {
 
     //Checks if there is a winner and if there is a winner or a tie it will diplay a popup on weather either happened and when the popup is closed it resets the board.
     public void dispayWinnerCheck(){
+        // TODO: update with actual winner, no longer a "check" (GameControllerMain does the checking)
         String outcomeString = "Display Winner";
 
         if (outcomeString != null) {
