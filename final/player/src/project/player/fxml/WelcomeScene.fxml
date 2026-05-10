@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox alignment="CENTER" spacing="15"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="project.player.controller.WelcomeController">
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <Label text="Tic-Tac-Toe"
+           style="-fx-font-size: 28px; -fx-font-weight: bold;"/>
+
+    <!-- Server Status -->
+    <Label fx:id="serverStatusLabel"
+           text="Checking server connection..."/>
+
+    <!-- Username Input -->
+    <TextField fx:id="usernameField"
+               promptText="Enter username"/>
+
+    <!-- Start Button -->
+    <Button text="Start"
+            onAction="#handleStart"/>
+
+</VBox>
