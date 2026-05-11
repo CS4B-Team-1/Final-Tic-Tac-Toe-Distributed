@@ -17,18 +17,9 @@ public class WelcomeController {
     @FXML
     public void initialize() {
 
-  
         // Router implementation here
 
-        boolean connected = true;
-
-        if (connected) {
-            serverStatusLabel.setText("Server connection successful.");
-        } else {
-            serverStatusLabel.setText(
-                    "Server connection failed. Please try again."
-            );
-        }
+        serverStatusLabel.setText("Enter a username to connect.");
     }
 
     @FXML
@@ -44,8 +35,17 @@ public class WelcomeController {
         }
 
         try {
+            TicTacToe.connectRouter(username);
             TicTacToe.switchScene("LobbyScene.fxml");
         } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Connection Failed");
+            alert.setHeaderText(null);
+            alert.setContentText(
+                    "Could not connect to the router. Make sure the router is running."
+            );
+            alert.show();
+
             e.printStackTrace();
         }
     }

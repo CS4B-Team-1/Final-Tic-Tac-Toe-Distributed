@@ -1,12 +1,21 @@
 package project.player;
 
+import java.io.IOException;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import project.client.RouterClient;
 
 public class TicTacToe extends Application {
+
+    private static final String DEFAULT_HOST = "localhost";
+    private static final int DEFAULT_PORT = 4000;
+
     private static Stage mainStage;
+    private static RouterClient routerClient;
+    private static String playerName;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -18,6 +27,33 @@ public class TicTacToe extends Application {
         mainStage.setTitle("Distributed Tic-Tac-Toe");
         mainStage.setScene(scene);
         mainStage.show();
+
+        mainStage.setOnCloseRequest(event -> disconnectRouter());
+    }
+
+    public static void connectRouter(String username) throws IOException {
+        if (routerClient != null && routerClient.isConnected()) {
+            return;
+        }
+
+        playerName = username;
+
+        routerClient = new RouterClient(DEFAULT_HOST, DEFAULT_PORT);
+        routerClient.connect();
+    }
+
+    public static RouterClient getRouterClient() {
+        return routerClient;
+    }
+
+    public static String getPlayerName() {
+        return playerName;
+    }
+
+    public static void disconnectRouter() {
+        if (routerClient != null && routerClient.isConnected()) {
+            routerClient.disconnect();
+        }
     }
 
     public static void switchScene(String fxmlFile) throws Exception {
@@ -27,7 +63,8 @@ public class TicTacToe extends Application {
         mainStage.setScene(scene);
         mainStage.show();
     }
-    public static void main(String[] args){
+
+    public static void main(String[] args) {
         launch(args);
     }
 }
