@@ -1,9 +1,13 @@
 package project.player.controller;
+
+import java.util.Optional;
+
+import javafx.application.Platform;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-
-import java.util.Optional;
 
 public class LobbyController {
 
