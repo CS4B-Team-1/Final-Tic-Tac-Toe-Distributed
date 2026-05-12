@@ -17,7 +17,7 @@ public class SplashController {
     private Scene scene;
 
     public void handleOnePlayer(Event event) throws IOException {
-        root = FXMLLoader.load(getClass().getResource("..\\fxml\\TicTacToeBoard.fxml"));
+        root = FXMLLoader.load(getClass().getResource("/project/player/fxml/TicTacToeBoard.fxml"));
         stage = (Stage)((Node) event.getSource()).getScene().getWindow();
         scene = new Scene(root);
         stage.setScene(scene);
@@ -25,11 +25,11 @@ public class SplashController {
 
     }
     public void handleTwoPlayer(Event event) throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\TicTacToeBoard.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/project/player/fxml/TicTacToeBoard.fxml"));
         root = loader.load();
         BoardController boardController = loader.getController();
         boardController.setIsOnePlayerGame(false);
-        // root = FXMLLoader.load(getClass().getResource("..\\TicTacToeBoard.fxml"));
+        // root = FXMLLoader.load(getClass().getResource("/project/player/fxml/TicTacToeBoard.fxml"));
         stage = (Stage)((Node) event.getSource()).getScene().getWindow();
         scene = new Scene(root);
         stage.setScene(scene);
