@@ -445,7 +445,7 @@ public class BoardController {
     public void computerTurn() {
         // create the computer
         int move = 0;
-        this.updateGUI(move);
+        //this.updateGUI(move);
 
     }
 }
