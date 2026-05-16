@@ -60,6 +60,10 @@ public class BoardController {
     private Button bottomCenter;
     @FXML
     private Button bottomRight;
+    @FXML
+    private Label turnLabel;
+    @FXML
+    private Button leaveButton;
   
     //Constructor
     public BoardController() {
