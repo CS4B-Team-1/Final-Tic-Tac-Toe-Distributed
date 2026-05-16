@@ -4,28 +4,39 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox alignment="CENTER" spacing="15"
+<VBox alignment="CENTER"
+      spacing="22"
+      prefWidth="560"
+      prefHeight="480"
       xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="project.player.controller.WelcomeController">
 
     <padding>
-        <Insets top="20" right="20" bottom="20" left="20"/>
+        <Insets top="35" right="35" bottom="35" left="35"/>
     </padding>
 
+    <!-- Title -->
     <Label text="Tic-Tac-Toe"
-           style="-fx-font-size: 28px; -fx-font-weight: bold;"/>
+           style="-fx-font-size: 36px; -fx-font-weight: bold;"/>
 
     <!-- Server Status -->
     <Label fx:id="serverStatusLabel"
-           text="Checking server connection..."/>
+           text="Checking server connection..."
+           style="-fx-font-size: 16px;"/>
 
     <!-- Username Input -->
     <TextField fx:id="usernameField"
-               promptText="Enter username"/>
+               promptText="Enter username"
+               prefWidth="340"
+               prefHeight="44"
+               style="-fx-font-size: 16px;"/>
 
     <!-- Start Button -->
     <Button text="Start"
-            onAction="#handleStart"/>
+            onAction="#handleStart"
+            prefWidth="240"
+            prefHeight="70"
+            style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
 
 </VBox>
