@@ -37,7 +37,8 @@ public class LobbyController {
             */
             //Note: BoardController.java needs to subscribe to the game channel on initialize().
 
-            handleGameCreated(createdGame);
+
+            // handleGameCreated(createdGame);
 
         } else if (message instanceof GameNotFoundMessage gameNotFound) {
             handleGameNotFound(gameNotFound);
@@ -90,14 +91,6 @@ public class LobbyController {
                     e.printStackTrace();
                 }
             }
-        });
-    }
-
-    private void handleGameCreated(GameCreatedMessage createdGame){
-        Platform.runLater(() -> {
-            // try {
-            //     TicTacToe.switchScene("TicTacToeBoard.fxml");
-            // }   catch (Exception e) { e.printStackTrace();}
         });
     }
 

@@ -17,6 +17,14 @@ public class BoardController {
     ArrayList<Integer> boardGrid;
     boolean isOnePlayerGame = true;
 
+    private String clientGameID;
+    private String clientPlayerID;
+
+    public BoardController(String cGameID, String cPlayerID) {
+        this.clientGameID = cGameID;
+        this.clientPlayerID = cPlayerID;
+    }
+
     @FXML
     private Button topLeft;
     @FXML

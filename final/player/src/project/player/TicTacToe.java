@@ -14,7 +14,7 @@ public class TicTacToe extends Application {
     private static final int DEFAULT_PORT = 4000;
 
     private static Stage mainStage;
-    private static RouterClient routerClient;
+    private static RouterClient routerClient; //private static, but functionality is still accessible through public static methods
     private static String playerName;
 
     @Override
@@ -28,9 +28,21 @@ public class TicTacToe extends Application {
         mainStage.setScene(scene);
         mainStage.show();
 
+        // Ensure we disconnect from the router when the application is closed
         mainStage.setOnCloseRequest(event -> disconnectRouter());
     }
 
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    /*
+        The follow functions are all public static.
+        On whatever part you are working on, if you import this file into your controller,
+        you can call these functions to connect to the router,
+        get the router client, get the player name,
+        disconnect from the router, and switch scenes.
+     */
     public static void connectRouter(String username) throws IOException {
         if (routerClient != null && routerClient.isConnected()) {
             return;
@@ -62,9 +74,5 @@ public class TicTacToe extends Application {
 
         mainStage.setScene(scene);
         mainStage.show();
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }
