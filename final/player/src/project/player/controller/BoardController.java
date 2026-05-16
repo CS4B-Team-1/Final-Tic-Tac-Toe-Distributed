@@ -14,6 +14,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import project.client.MessageListener;
 import project.client.RouterClient;
+import project.protocol.MakeMoveMessage;
 import project.protocol.Message;
 import project.protocol.Move;
 import project.protocol.MoveAcceptedMessage;
@@ -246,30 +247,75 @@ public class BoardController {
         // -1 = X   0 = empty   1 = O
         switch(buttonID) {
             case "topLeft":
+                try {
+                    client.send("/game/", new MakeMoveMessage(gameId, currentTurn, 0, 0));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 boardGrid.set(0, buttonMove);
                 break;
             case "topCenter":
+                try {
+                    client.send("/game/", new MakeMoveMessage(gameId, currentTurn, 0, 1));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 boardGrid.set(1, buttonMove);
                 break;
             case "topRight":
+                try {
+                    client.send("/game/", new MakeMoveMessage(gameId, currentTurn, 0, 2));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 boardGrid.set(2, buttonMove);
                 break;
             case "middleLeft":
+                try {
+                    client.send("/game/", new MakeMoveMessage(gameId, currentTurn, 1, 0));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 boardGrid.set(3, buttonMove);
                 break;
             case "middleCenter":
+                try {
+                    client.send("/game/", new MakeMoveMessage(gameId, currentTurn, 1, 1));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 boardGrid.set(4, buttonMove);
                 break;
             case "middleRight":
+                try {
+                    client.send("/game/", new MakeMoveMessage(gameId, currentTurn, 1, 2));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 boardGrid.set(5, buttonMove);
                 break;
             case "bottomLeft":
+                try {
+                    client.send("/game/", new MakeMoveMessage(gameId, currentTurn, 2, 0));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 boardGrid.set(6, buttonMove);
                 break;
             case "bottomCenter":
+                try {
+                    client.send("/game/", new MakeMoveMessage(gameId, currentTurn, 2, 1));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 boardGrid.set(7, buttonMove);
                 break;
             case "bottomRight":
+                try {
+                    client.send("/game/", new MakeMoveMessage(gameId, currentTurn, 2, 2));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 boardGrid.set(8, buttonMove);
                 break;
             default:
