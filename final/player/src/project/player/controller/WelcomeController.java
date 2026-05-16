@@ -7,13 +7,19 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
-import project.player.TicTacToe;
 import project.player.controller.SingletonData.UsernameData;
-
+import project.player.handler.RouterHandler;
+import project.player.handler.SceneHandler;
 
 public class WelcomeController {
         
-    UsernameData usernameData = UsernameData.getInstance(); //store username data through here
+    /*
+        player Username - the name the player enters at the beginning of the program. Only used for display purposes in the GUI
+        player ID - the unique ID assigned to the player by the server on connection. This is the identifier for all players in the message system
+
+        Sender ID - see Envelope.java, the Player ID is the Sender ID.
+    */
+    private UsernameData usernameData = UsernameData.getInstance(); //store username data through here
 
     @FXML
     private Label serverStatusLabel;
@@ -32,7 +38,6 @@ public class WelcomeController {
     private void handleStart() {
         String username = usernameField.getText().trim();
 
-
         //input check username
         if (username.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -43,16 +48,15 @@ public class WelcomeController {
 
         //try to connect to router
         try {
-            TicTacToe.connectRouter(username);
+            RouterHandler.connectRouter();
 
-            //store username in singleton data class to pass data and the unique ID
+            //store username & unique ID in singleton data class to pass data and the unique ID between controllers smoothly
             usernameData.setUsername(username); 
             usernameData.setPlayerId(
                 UUID.randomUUID().toString()
             );
 
-
-            TicTacToe.switchScene("LobbyScene.fxml");
+            SceneHandler.switchScene("LobbyScene.fxml");
 
         } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);

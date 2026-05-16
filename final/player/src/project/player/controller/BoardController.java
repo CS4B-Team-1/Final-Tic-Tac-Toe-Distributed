@@ -26,15 +26,20 @@ public class BoardController {
     // TODO: rework to not be default
     private String playerSymbol = this.PLAYER_X;
     private String currentTurn = this.PLAYER_X;
-    private String playerId;
-    private String gameId;
+
+    private final String PLAYER_X = "X";
+    private final String PLAYER_O = "O";
+    private final String GAME_CHANNEL = "/game/";
 
     private String clientGameID;
     private String clientPlayerID;
 
-    public BoardController(String cGameID, String cPlayerID) {
-        this.clientGameID = cGameID;
-        this.clientPlayerID = cPlayerID;
+    public void setGameId(String gameId) {
+        this.clientGameID = gameId;
+    }
+
+    public void setPlayerId(String playerId) {
+        this.clientPlayerID = playerId;
     }
 
     @FXML
@@ -55,12 +60,7 @@ public class BoardController {
     private Button bottomCenter;
     @FXML
     private Button bottomRight;
-
-    private final String PLAYER_X = "X";
-    private final String PLAYER_O = "O";
-    private final String GAME_CHANNEL = "/game/";
-
-    
+  
     //Constructor
     public BoardController() {
         try {
@@ -84,7 +84,7 @@ public class BoardController {
                 System.out.println();
             };
 
-            RouterHandler.getRouterClient().subscribe(GAME_CHANNEL + this.gameId, listener);
+            RouterHandler.getRouterClient().subscribe(GAME_CHANNEL + this.clientGameID, listener);
 
         } catch (IOException e) {
             Alert alert = new Alert(AlertType.ERROR);
@@ -104,7 +104,7 @@ public class BoardController {
         String symbol = "";
         this.currentTurn = message.getPlayerId();
 
-        if (this.currentTurn != this.playerId) {
+        if (this.currentTurn != this.clientPlayerID) {
             if (this.playerSymbol == PLAYER_X) {
                 symbol = PLAYER_O;
             } else {

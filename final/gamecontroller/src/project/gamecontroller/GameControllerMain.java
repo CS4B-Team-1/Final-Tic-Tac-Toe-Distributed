@@ -64,7 +64,11 @@ public class GameControllerMain {
                     createGame(game, client, channel);
                 } else if (message instanceof JoinGameMessage joinGame) {
                     handleJoinGame(client, channel, joinGame);
-                }else {
+                }else if (message instanceof LeaveGameMessage leaveGame) {
+                    System.out.println("Player " + leaveGame.getPlayerId() + " left game " + leaveGame.getGameId());
+                    //TODO: create handleLeaveGame()
+                    // handleLeaveGame(leaveGame);
+                }else{
                     System.out.println("Message: " + message);
                 }
 
@@ -127,10 +131,10 @@ public class GameControllerMain {
             - StartGameMessage if they successfully join a game (this will trigger the game to start and the first move to be made)
             
     */
-    private static void handleJoinGame(RouterClient client, String channel, JoinGameMessage join) {
+    private static void handleJoinGame(RouterClient client, String channel, JoinGameMessage joinGameMessage) {
 
-        String playerId = join.getPlayerId();
-        String gameId = join.getGameId();
+        String playerId = joinGameMessage.getPlayerId();
+        String gameId = joinGameMessage.getGameId();
 
         try {
 
@@ -142,15 +146,32 @@ public class GameControllerMain {
                 return;
             }
 
-            if (!game.getPlayers().containsKey(join.getPlayerId())) {
+            if (!game.getPlayers().containsKey(joinGameMessage.getPlayerId())) {
                 String symbol = "O";
                 game.addPlayer(playerId, symbol);
             }
 
-            //Creating and joining a game are now seperate.
-            // a valid join game request will always make the lobby full. Therefore, the game should always be started if a game is found.
-            client.send(channel, new StartGameMessage(gameId));
+            //keep this wrapped in an if statement to protect against another thread sending a leave game message in the middle of another thread executing handleJoinGame.
+            if (game.getPlayers().size() == 2) {
 
+                List<String> playerIds = new ArrayList<>(game.getPlayers().keySet());
+
+                String player1 = playerIds.get(0);
+                String player2 = playerIds.get(1);
+                
+                //send message to both players
+                client.send(
+                    PLAYERS + "/" + player1,
+                    new StartGameMessage(gameId)
+                );
+
+                client.send(
+                    PLAYERS + "/" + player2,
+                    new StartGameMessage(gameId)
+                );
+
+                System.out.println("Game " + gameId + " started with players: " + game.getPlayers());
+            }
         } catch (IOException e) {
             System.err.println("Join game error: " + e.getMessage());
             e.printStackTrace();

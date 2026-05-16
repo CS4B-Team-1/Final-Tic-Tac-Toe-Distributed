@@ -22,13 +22,15 @@
 
     <!-- Join Button -->
     <Button text="Join"
-            onAction="#handleJoin"/>
+            onAction="#handleJoin"
+            fx:id="joinButton"/>
 
     <!-- Status Text -->
     <Label fx:id="statusLabel"/>
 
     <!-- Quit Button -->
-    <Button text="Quit"
+    <Button fx:id="quitButton"
+            text="Quit"
             onAction="#handleQuit"/>
 
 </VBox>

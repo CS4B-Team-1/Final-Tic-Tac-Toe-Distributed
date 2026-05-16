@@ -22,4 +22,8 @@ public class TicTacToe extends Application {
 
         SceneHandler.getStage().setOnCloseRequest(event -> RouterHandler.disconnectRouter());
     }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }
