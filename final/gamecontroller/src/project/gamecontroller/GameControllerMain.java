@@ -60,7 +60,6 @@ public class GameControllerMain {
                     System.out.println("Player joined: " + join.getPlayerName());
                 } else if (message instanceof MakeMoveMessage move) {
                     makeMoveMessageReceived(client, channel, move);
-                
                 } else if (message instanceof CreateGameMessage game) {
                     createGame(game, client, channel);
                 } else if (message instanceof JoinGameMessage joinGame) {
@@ -97,9 +96,14 @@ public class GameControllerMain {
     */
     private static Game createGame(CreateGameMessage message, RouterClient client, String channel) {
         try {
+
             Game game = new Game(message.getGameId(), message.getPlayerId());
             games.put(message.getGameId(), game);
-            client.send(PLAYERS + "/" + message.getPlayerId(), new GameCreatedMessage(message.getGameId(), channel, "online"));
+
+            client.send(
+                PLAYERS + "/" + message.getPlayerId(),
+                new GameCreatedMessage(message.getGameId(), channel, "online")
+            );
 
             System.out.println("Game created: " + message.getGameId() + " by " + message.getPlayerId());
 
@@ -113,10 +117,15 @@ public class GameControllerMain {
 
     /*
         Handler for when a player sends a JoinGameMessage to join a game.
-            - search for game, if it doesnt exist, create a new one
-            - assign symbol (X first, then O), and add player to the game
+            - search for game, if it doesnt exist, send GameNotFoundMessage to the player and return.
+            - assign symbol to second player "O" and add them to the game
             - Notify everyone in the game channel that someone joined
-            - If game is full, send a StartGameMessage to the router
+            - send a StartGameMessage to the router
+
+        The only responses that should be sent back to the player are:
+            - GameNotFoundMessage if the game ID they sent doesn't match any existing games
+            - StartGameMessage if they successfully join a game (this will trigger the game to start and the first move to be made)
+            
     */
     private static void handleJoinGame(RouterClient client, String channel, JoinGameMessage join) {
 
@@ -125,29 +134,22 @@ public class GameControllerMain {
 
         try {
 
-            // search for existing game, if it doesnt exist, create a new one
+            // If game doesn't exist, send GameNotFoundMessage to the player and return.
             Game game = games.get(gameId);
-            if (game == null) game = createGame(new CreateGameMessage(join.getPlayerId(), join.getGameId()), client, channel);
-            if (game == null) throw new IOException("Error while creating game");
-            // Assign symbol (X first, then O),
-            // and add player to the game
-            // TODO: Game() already creates the first player as "X", second player should be "O"; this overwrites the first player's symbol to be "O".
+            if (game == null) {
+                
+                client.send(PLAYERS + "/" + playerId, new GameNotFoundMessage(gameId));
+                return;
+            }
 
-            // String symbol = (game.getPlayers().size() == 0) ? "X" : "O";
             if (!game.getPlayers().containsKey(join.getPlayerId())) {
                 String symbol = "O";
                 game.addPlayer(playerId, symbol);
             }
-    
-            // Notify everyone in the game channel
-            client.send(channel,
-                new JoinMessage(playerId)
-            );
 
-            // Start game if full (by the way StartGameMessage only needs gameID as its attribute)
-            if (game.getPlayers().size() == 2) {
-                client.send(channel, new StartGameMessage(gameId));
-            }
+            //Creating and joining a game are now seperate.
+            // a valid join game request will always make the lobby full. Therefore, the game should always be started if a game is found.
+            client.send(channel, new StartGameMessage(gameId));
 
         } catch (IOException e) {
             System.err.println("Join game error: " + e.getMessage());
