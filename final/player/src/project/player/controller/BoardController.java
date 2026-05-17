@@ -1,6 +1,7 @@
 package project.player.controller;
 
 import java.io.IOException;
+import java.lang.classfile.Label;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -17,6 +18,8 @@ import project.client.MessageListener;
 import project.client.RouterClient;
 import project.player.handler.RouterHandler;
 import project.protocol.GameStatus;
+import project.protocol.MakeMoveMessage;
+import project.protocol.Message;
 import project.protocol.Move;
 import project.protocol.MoveAcceptedMessage;
 import project.protocol.MoveRejectedMessage;
@@ -226,6 +229,81 @@ public class BoardController {
         } else {
             System.out.println("unknown button clicked");
         }
+
+        // Update boardGrid array
+        // -1 = X   0 = empty   1 = O
+        switch(buttonID) {
+            case "topLeft":
+                try {
+                    RouterHandler.getRouterClient().send("/game/", new MakeMoveMessage(this.clientGameID, currentTurn, 0, 0));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
+                break;
+            case "topCenter":
+                try {
+                    RouterHandler.getRouterClient().send("/game/", new MakeMoveMessage(this.clientGameID, currentTurn, 0, 1));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
+                break;
+            case "topRight":
+                try {
+                    RouterHandler.getRouterClient().send("/game/", new MakeMoveMessage(this.clientGameID, currentTurn, 0, 2));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
+                break;
+            case "middleLeft":
+                try {
+                    RouterHandler.getRouterClient().send("/game/", new MakeMoveMessage(this.clientGameID, currentTurn, 1, 0));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
+                break;
+            case "middleCenter":
+                try {
+                    RouterHandler.getRouterClient().send("/game/", new MakeMoveMessage(this.clientGameID, currentTurn, 1, 1));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
+                break;
+            case "middleRight":
+                try {
+                    RouterHandler.getRouterClient().send("/game/", new MakeMoveMessage(this.clientGameID, currentTurn, 1, 2));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
+                break;
+            case "bottomLeft":
+                try {
+                    RouterHandler.getRouterClient().send("/game/", new MakeMoveMessage(this.clientGameID, currentTurn, 2, 0));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
+                break;
+            case "bottomCenter":
+                try {
+                    RouterHandler.getRouterClient().send("/game/", new MakeMoveMessage(this.clientGameID, currentTurn, 2, 1));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
+                break;
+            case "bottomRight":
+                try {
+                    RouterHandler.getRouterClient().send("/game/", new MakeMoveMessage(this.clientGameID, currentTurn, 2, 2));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
+                break;
+            default:
+                break;
+        }
+        this.dispayWinnerCheck();
+
+        //disable the button to disallow
+        // overwriting moves (can be removed if you want to allow players to change their move before the game ends)
+        boardButton.setMouseTransparent(true);
     }
 
     //Checks if there is a winner and if there is a winner or a tie it will diplay a popup on weather either happened and when the popup is closed it resets the board.
