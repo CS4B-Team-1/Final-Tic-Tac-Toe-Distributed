@@ -228,8 +228,9 @@ public class LobbyController {
                 BoardController boardController = loader.getController();
 
                 // set gameId and playerId for the BoardController
-                boardController.setGameId(startGameMessage.getGameId());
-                boardController.setPlayerId(usernameData.getPlayerId());
+                // boardController.setGameId(startGameMessage.getGameId());
+                // boardController.setPlayerId(usernameData.getPlayerId());
+                boardController.createGame(startGameMessage.getGameId(), usernameData.getPlayerId(), startGameMessage);
 
                 // switch scene to game board
                 Scene scene = new Scene(root);

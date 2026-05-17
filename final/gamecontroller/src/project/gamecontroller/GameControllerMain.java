@@ -16,9 +16,6 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * The GameController connects to the router and subscribes to /game/* ,
  * allowing it to receive messages from any game channel
- *
- * For now, this only prints received messages so we can test routing
- * TODO: validate moves and send messages back to the correct channels
  **/
 
 public class GameControllerMain {
@@ -159,17 +156,20 @@ public class GameControllerMain {
                 List<String> playerIds = new ArrayList<>(game.getPlayers().keySet());
 
                 String player1 = playerIds.get(0);
+                String symbol1 = game.getPlayers().get(player1);
+
                 String player2 = playerIds.get(1);
-                
+                String symbol2 = game.getPlayers().get(player2);
+
                 //send message to both players
                 client.send(
                     PLAYERS + player1,
-                    new StartGameMessage(gameId)
+                    new StartGameMessage(gameId, player1, symbol1)
                 );
 
                 client.send(
                     PLAYERS + player2,
-                    new StartGameMessage(gameId)
+                    new StartGameMessage(gameId, player1, symbol2)
                 );
 
                 System.out.println("Game " + gameId + " started with players: " + game.getPlayers());
@@ -188,7 +188,7 @@ public class GameControllerMain {
 
             // if the game is null, no game exists for that game ID
             if (game == null) {
-                sendMoveRejection(client, move, "Game does not exist for game ID " + move.getGameId() + ".");
+                sendMoveRejection(client, move, MoveRejectedMessage.RejectReason.NO_GAME_EXISTS);
                 return;
             }
 
@@ -198,7 +198,7 @@ public class GameControllerMain {
 
             // check if the given move's player is in the list of players
             if (!players.contains(move.getPlayerId())) {
-                sendMoveRejection(client, move, "You are not a player in this game.");
+                sendMoveRejection(client, move, MoveRejectedMessage.RejectReason.INVALID_PLAYER);
                 return;
             }
 
@@ -218,18 +218,18 @@ public class GameControllerMain {
             // - the player symbol is either an X or O
             // - move is valid (an empty spot on the board)
             // - it's the move's player's turn
-            String reason = "";
+            MoveRejectedMessage.RejectReason reason = null;
             boolean success = false;
             if (!players.contains(move.getPlayerId()))
-                reason = "You are not a player in this game.";
+                reason = MoveRejectedMessage.RejectReason.INVALID_PLAYER;
             else if (nextPlayerId.isEmpty())
-                reason = "No second player.";
+                reason = MoveRejectedMessage.RejectReason.NO_SECOND_PLAYER;
             else if (!symbol.equals(PLAYER_X) && !symbol.equals(PLAYER_O))
-                reason = "Invalid player symbol.";
+                reason = MoveRejectedMessage.RejectReason.INVALID_SYMBOL;
             else if (!game.getCurrentTurn().equals(move.getPlayerId()))
-                reason = "Not currently your turn. Current player's turn: " + game.getCurrentTurn();
+                reason = MoveRejectedMessage.RejectReason.NOT_CURRENT_TURN;
             else if (!checkIfMoveValid(move.getGameId(), move.getRow(), move.getColumn()))
-                reason = "Invalid move at " + move.getRow() + move.getColumn() + ".";
+                reason = MoveRejectedMessage.RejectReason.INVALID_MOVE;
             else
                 success = true;
 
@@ -252,9 +252,8 @@ public class GameControllerMain {
                                                 nextPlayerId, 
                                                 boardStatus));
                 } else if (boardStatus == GameStatus.INVALID_STATUS){
-                    sendMoveRejection(client, move, "Game status is currently invalid.");
-                } else {    
-                    // TODO: proceed with win/lose/draw
+                    sendMoveRejection(client, move, MoveRejectedMessage.RejectReason.INVALID_STATUS);
+                } else {
                     winningMessages(client, boardStatus, move.getGameId(), move, game.getBoard());
                 }
 
@@ -268,7 +267,7 @@ public class GameControllerMain {
         }
     }
 
-    private static void sendMoveRejection(RouterClient client, MakeMoveMessage message, String reason) throws IOException {
+    private static void sendMoveRejection(RouterClient client, MakeMoveMessage message, MoveRejectedMessage.RejectReason reason) throws IOException {
         client.send(PLAYERS + message.getPlayerId(), new MoveRejectedMessage(
                                             message.getGameId(), 
                                             message.getPlayerId(),
@@ -351,7 +350,7 @@ public class GameControllerMain {
             try {
                 client.send(GAME_CHANNEL + gameId, new MoveAcceptedMessage(gameId, winningMakeMoveMessage.getPlayerId(), winningMakeMoveMessage.getRow(), winningMakeMoveMessage.getColumn(), board, "", GameStatus.PLAYER_O_WIN));
             } catch (IOException e) {
-                System.out.println("ERROR: Failed to send PLAYER_X_WIN status message to game " + gameId + " channel!");
+                System.out.println("ERROR: Failed to send PLAYER_O_WIN status message to game " + gameId + " channel!");
             }
         }
 

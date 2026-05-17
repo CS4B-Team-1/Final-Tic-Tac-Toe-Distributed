@@ -5,14 +5,24 @@ package project.protocol;
 public class StartGameMessage implements Message {
 
     private String gameId;
+    private String startingPlayerId;
+    private String symbol;
 
-    public StartGameMessage(String gameId) {
-
+    public StartGameMessage(String gameId, String startingPlayerId, String symbol) {
         this.gameId = gameId;
+        this.startingPlayerId = startingPlayerId;
+        this.symbol = symbol;
     }
 
     public String getGameId() {
         return this.gameId;
     }
 
+    public String getStartingPlayerId() {
+        return this.startingPlayerId;
+    }
+
+    public String getSymbol() {
+        return this.symbol;
+    }
 }
