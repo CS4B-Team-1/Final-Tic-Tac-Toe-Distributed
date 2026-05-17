@@ -26,7 +26,9 @@ public class GameControllerMain {
     private static final String DEFAULT_HOST = "localhost";
     private static final int DEFAULT_PORT = 4000;
     private static final String ALL_GAME_CHANNELS = "/game/*";
-    private static final String PLAYERS = "/players";
+    private static final String GAME_CHANNEL = "/game/";
+    private static final String PLAYERS = "/players/";
+
     private static final String PLAYER_X = "X";
     private static final String PLAYER_O = "O";
 
@@ -105,7 +107,7 @@ public class GameControllerMain {
             games.put(message.getGameId(), game);
 
             client.send(
-                PLAYERS + "/" + message.getPlayerId(),
+                PLAYERS + message.getPlayerId(),
                 new GameCreatedMessage(message.getGameId(), channel, "online")
             );
 
@@ -142,7 +144,7 @@ public class GameControllerMain {
             Game game = games.get(gameId);
             if (game == null) {
                 
-                client.send(PLAYERS + "/" + playerId, new GameNotFoundMessage(gameId));
+                client.send(PLAYERS + playerId, new GameNotFoundMessage(gameId));
                 return;
             }
 
@@ -161,12 +163,12 @@ public class GameControllerMain {
                 
                 //send message to both players
                 client.send(
-                    PLAYERS + "/" + player1,
+                    PLAYERS + player1,
                     new StartGameMessage(gameId)
                 );
 
                 client.send(
-                    PLAYERS + "/" + player2,
+                    PLAYERS + player2,
                     new StartGameMessage(gameId)
                 );
 
@@ -253,7 +255,7 @@ public class GameControllerMain {
                     sendMoveRejection(client, move, "Game status is currently invalid.");
                 } else {    
                     // TODO: proceed with win/lose/draw
-                    winningMessages(client, boardStatus, move.getGameId());
+                    winningMessages(client, boardStatus, move.getGameId(), move, game.getBoard());
                 }
 
             // if any of the previous checks fail, the move is invalid and needs to be rejected
@@ -267,7 +269,7 @@ public class GameControllerMain {
     }
 
     private static void sendMoveRejection(RouterClient client, MakeMoveMessage message, String reason) throws IOException {
-        client.send(PLAYERS + "/" + message.getPlayerId(), new MoveRejectedMessage(
+        client.send(PLAYERS + message.getPlayerId(), new MoveRejectedMessage(
                                             message.getGameId(), 
                                             message.getPlayerId(),
                                             message.getRow(), 
@@ -317,61 +319,39 @@ public class GameControllerMain {
 
     // winningMessages function
     // Sends out game draw, won, over messages
-    private static void winningMessages(RouterClient client, GameStatus status, String gameId) {
-        // Find ID of Player O
-        Optional<String> findO = games.get(gameId).getPlayers().entrySet().stream().filter(entry->"O".equals(entry.getValue())).map(ConcurrentHashMap.Entry::getKey).findFirst();
-        String playerO = findO.get();
+    private static void winningMessages(RouterClient client, GameStatus status, String gameId, MakeMoveMessage winningMakeMoveMessage, List<Integer> board) {
+        // // Find ID of Player O
+        // Optional<String> findO = games.get(gameId).getPlayers().entrySet().stream().filter(entry->"O".equals(entry.getValue())).map(ConcurrentHashMap.Entry::getKey).findFirst();
+        // String playerO = findO.get();
 
-        // Find ID of Player X
-        Optional<String> findX = games.get(gameId).getPlayers().entrySet().stream().filter(entry->"X".equals(entry.getValue())).map(ConcurrentHashMap.Entry::getKey).findFirst();
-        String playerX = findX.get();
+        // // Find ID of Player X
+        // Optional<String> findX = games.get(gameId).getPlayers().entrySet().stream().filter(entry->"X".equals(entry.getValue())).map(ConcurrentHashMap.Entry::getKey).findFirst();
+        // String playerX = findX.get();
 
         // Check if GameStatus a draw
         if (status == GameStatus.TIE_GAME) {
 
-            // Send GameDrawMessage to both players
+            // Send Tie game status to both players in game channel
             try {
-                client.send(PLAYERS + "/" + playerX, new GameDrawMessage(gameId, ""));
+                client.send(GAME_CHANNEL + gameId, new MoveAcceptedMessage(gameId, winningMakeMoveMessage.getPlayerId(), winningMakeMoveMessage.getRow(), winningMakeMoveMessage.getColumn(), board, "", GameStatus.TIE_GAME));
             } catch (IOException e) {
-                System.out.println("ERROR: Failed to send GameDrawMessage to Player X!");
+                System.out.println("ERROR: Failed to send TIE_GAME status message to game " + gameId + " channel!");
             }
-            try {
-                client.send(PLAYERS + "/" + playerO, new GameDrawMessage(gameId, ""));
-            } catch (IOException e) {
-                System.out.println("ERROR: Failed to send GameDrawMessage to Player O!");
-            }
-
-                // Check if GameStatus a Player X win
         } else if (status == GameStatus.PLAYER_X_WIN) {
 
-            // Send GameWonMessage to Player X
+            // Send Player X winning status to both players in the game channel
             try {
-                client.send(PLAYERS + "/" + playerX, new GameWonMessage(gameId, "", "", ""));
+                client.send(GAME_CHANNEL + gameId, new MoveAcceptedMessage(gameId, winningMakeMoveMessage.getPlayerId(), winningMakeMoveMessage.getRow(), winningMakeMoveMessage.getColumn(), board, "", GameStatus.PLAYER_X_WIN));
             } catch (IOException e) {
-                System.out.println("ERROR: Failed to send GameWonMessage to Player X!");
+                System.out.println("ERROR: Failed to send PLAYER_X_WIN status message to game " + gameId + " channel!");
             }
-
-            // Send GameLostMessage to Player O
-            try {
-                client.send(PLAYERS + "/" + playerO, new GameOverMessage(gameId, "", ""));
-            } catch (IOException e) {
-                System.out.println("ERROR: Failed to send GameOverMessage to Player O!");
-            }
-            // Check if GameStatus a Player O win
         } else if (status == GameStatus.PLAYER_O_WIN) {
 
-            // Send GameWonMessage to Player O
+            // Send Player O winning status to both players in the game channel
             try {
-                client.send(PLAYERS + "/" + playerO, new GameWonMessage(gameId, "", "", ""));
+                client.send(GAME_CHANNEL + gameId, new MoveAcceptedMessage(gameId, winningMakeMoveMessage.getPlayerId(), winningMakeMoveMessage.getRow(), winningMakeMoveMessage.getColumn(), board, "", GameStatus.PLAYER_O_WIN));
             } catch (IOException e) {
-                System.out.println("ERROR: Failed to send GameWonMessage to Player O!");
-            }
-
-            // Send GameLostMessage to Player O
-            try {
-                client.send(PLAYERS + "/" + playerX, new GameOverMessage(gameId, "", ""));
-            } catch (IOException e) {
-                System.out.println("ERROR: Failed to send GameOverMessage to Player X!");
+                System.out.println("ERROR: Failed to send PLAYER_X_WIN status message to game " + gameId + " channel!");
             }
         }
 
