@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox alignment="CENTER"
+      spacing="20"
+      prefWidth="560"
+      prefHeight="480"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="project.player.controller.LobbyController">
+
+    <padding>
+        <Insets top="35" right="35" bottom="35" left="35"/>
+    </padding>
+
+    <!-- Title -->
+    <Label text="Lobby"
+           style="-fx-font-size: 34px; -fx-font-weight: bold;"/>
+
+    <!-- Game ID -->
+    <TextField fx:id="gameIdField"
+               promptText="Enter Game ID"
+               prefWidth="340"
+               prefHeight="44"
+               style="-fx-font-size: 16px;"/>
+
+    <!-- Join Button -->
+    <Button text="Join"
+            onAction="#handleJoin"
+            fx:id="joinButton"
+            prefWidth="240"
+            prefHeight="70"
+            style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+
+    <!-- Status Text -->
+    <Label fx:id="statusLabel"
+           style="-fx-font-size: 16px;"/>
+
+    <!-- Quit Button -->
+    <Button fx:id="quitButton"
+            text="Quit"
+            onAction="#handleQuit"
+            prefWidth="200"
+            prefHeight="55"
+            style="-fx-font-size: 20px;"/>
+
+</VBox>

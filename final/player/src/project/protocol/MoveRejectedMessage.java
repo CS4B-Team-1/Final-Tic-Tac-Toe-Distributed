@@ -5,9 +5,19 @@ public class MoveRejectedMessage implements Message {
     private String playerId;
     private int row;
     private int column;
-    private String reason;
+    private RejectReason reason;
 
-    public MoveRejectedMessage(String gameId, String playerId, int row, int column, String reason) {
+    public enum RejectReason {
+        INVALID_PLAYER,
+        NO_SECOND_PLAYER,
+        INVALID_SYMBOL,
+        NOT_CURRENT_TURN,
+        INVALID_MOVE,
+        INVALID_STATUS,
+        NO_GAME_EXISTS
+    }
+
+    public MoveRejectedMessage(String gameId, String playerId, int row, int column, RejectReason reason) {
         this.gameId = gameId;
         this.playerId = playerId;
         this.row = row;
@@ -31,7 +41,7 @@ public class MoveRejectedMessage implements Message {
         return this.column;
     }
 
-    public String getReason() {
+    public RejectReason getReason() {
         return this.reason;
     }
 }

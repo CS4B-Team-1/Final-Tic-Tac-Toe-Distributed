@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="CENTER" spacing="20"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="project.player.controller.ResultController">
+
+    <Label fx:id="resultLabel"
+           text="Game Result"
+           style="-fx-font-size: 28px; -fx-font-weight: bold;"/>
+
+</VBox>

@@ -1,21 +1,48 @@
 package project.player.controller;
 
-import java.util.ArrayList;
+import java.io.IOException;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
 import javafx.scene.control.Button;
-import javafx.scene.input.MouseButton;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import project.client.MessageListener;
+import project.player.handler.RouterHandler;
+import project.protocol.GameStatus;
+import project.protocol.MakeMoveMessage;
+import project.protocol.Move;
+import project.protocol.MoveAcceptedMessage;
+import project.protocol.MoveRejectedMessage;
+import project.protocol.StartGameMessage;
 
 public class BoardController {
 
-    ArrayList<Integer> boardGrid;
-    boolean isOnePlayerGame = true;
+    private String playerSymbol = "";
+    private String currentTurn = "";
+
+    private final String PLAYER_X = "X";
+    private final String PLAYER_O = "O";
+    private final String GAME_CHANNEL = "/game/";
+    private final String PLAYER_CHANNEL = "/players/";
+
+    private String clientGameID;
+    private String clientPlayerID;
+
+    public void setGameId(String gameId) {
+        this.clientGameID = gameId;
+    }
+
+    public void setPlayerId(String playerId) {
+        this.clientPlayerID = playerId;
+    }
 
     @FXML
     private Button topLeft;
@@ -35,210 +62,309 @@ public class BoardController {
     private Button bottomCenter;
     @FXML
     private Button bottomRight;
-
-    private int numActiveTiles;
-
-    private final int GRID_SIZE = 9; 
-    private final String PLAYER_X = "X";
-    private final String PLAYER_O = "O"; 
-    private final boolean IS_COMPUTER_MAXIMIZER = false;
-    
+    @FXML
+    private Label turnLabel;
+    @FXML
+    private Button leaveButton;
+  
     //Constructor
-    public BoardController() {
-        boardGrid = new ArrayList<Integer>();
-        // Set all boardGrid to empty
-        for (int i = 0; i < GRID_SIZE; i++) {
-            boardGrid.add(0);
+    public BoardController() {}
+
+    // must be called AFTER clientGameID and clientPlayerID have been populated
+    // otherwise will subscribe to a null  channel
+    public void createGame(String clientGameId, String clientPlayerId, StartGameMessage startGameMessage) {
+        try {
+            this.clientGameID = clientGameId;
+            this.clientPlayerID = clientPlayerId;
+            this.playerSymbol = startGameMessage.getSymbol();
+            this.currentTurn = startGameMessage.getStartingPlayerId();
+
+            // creates a listener for the specific game's channel for the player
+            MessageListener gameListener = (channel, senderId, message) -> {
+                System.out.println("[" + senderId + "] message received");
+                System.out.println("Channel: " + channel);
+                System.out.println("Sender: " + senderId);
+                System.out.println("Message type: " + message.getClass().getSimpleName());
+
+                if (message instanceof MoveAcceptedMessage move) {
+                    Platform.runLater(() -> {
+                        handleMoveAccepted(move);
+                    });
+                } else {
+                    System.err.println("Undefined message for BoardController: " + message);
+                }
+                System.out.println();
+            };
+
+            // creates a separate listener to add to the player's channel to receive error message like MoveRejectedMessage
+            MessageListener errorListener = (channel, senderId, message) -> {
+                System.out.println("[" + senderId + "] message received");
+                System.out.println("Channel: " + channel);
+                System.out.println("Sender: " + senderId);
+                System.out.println("Message type: " + message.getClass().getSimpleName());
+                if (message instanceof MoveRejectedMessage move) {
+                    Platform.runLater(() -> {
+                        handleMoveRejected(move);
+                    });
+                }
+                System.out.println();
+            };
+
+            RouterHandler.getRouterClient().subscribe(GAME_CHANNEL + this.clientGameID, gameListener);
+            RouterHandler.getRouterClient().subscribe(PLAYER_CHANNEL + this.clientPlayerID, errorListener);
+
+        } catch (IOException e) {
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setContentText("BoardController client could not connect to the server");
+            alert.setOnCloseRequest((event) -> { handleGameExit(); });
+            alert.show();
+            e.printStackTrace();
         }
     }
 
-    public void setIsOnePlayerGame(boolean isOnePlayerGame) {
-        this.isOnePlayerGame = isOnePlayerGame;
+    private void handleMoveAccepted(MoveAcceptedMessage message) {
+
+        int index = Move.toIndex(message.getRow(), message.getCol());
+        String symbol = "";
+        String nextSymbol = "";
+        this.currentTurn = message.getPlayerId();
+
+        if (!this.currentTurn.equals(this.clientPlayerID)) {
+            if (this.playerSymbol.equals(PLAYER_X)) {
+                symbol = PLAYER_O;
+                nextSymbol = this.playerSymbol;
+            } else {
+                symbol = PLAYER_X;
+                nextSymbol = this.playerSymbol;
+            }
+        } else {
+            if (this.playerSymbol.equals(PLAYER_X)) {
+                symbol = this.playerSymbol;
+                nextSymbol = PLAYER_O;
+            } else {
+                symbol = this.playerSymbol;
+                nextSymbol = PLAYER_X;
+            }
+        }
+
+        updateGUI(index, symbol);
+        GameStatus gameStatus = message.getGameStatus();
+
+        if (message.getGameStatus() == GameStatus.GAME_ONGOING) {
+            this.currentTurn = message.getNextTurn();
+            this.turnLabel.setText(nextSymbol + "'s turn");
+            // strip UUID from playerID when displaying?
+            System.out.println("Now " + message.getNextTurn() + "'s turn.");
+        } else if ((message.getGameStatus() == GameStatus.INVALID_STATUS) || (message.getGameStatus() == null)) {
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setContentText("Invalid game state, exit current game");
+            alert.setOnCloseRequest((event) -> { handleGameExit(); });
+            alert.show();
+        } else {
+            if (gameStatus == GameStatus.PLAYER_X_WIN) {
+                // TODO: display winning screen, leave game
+            } else if (gameStatus == GameStatus.PLAYER_O_WIN) {
+                // TODO: display winning screen, leave game
+            } else {
+                // TODO: display tie game screen, leave game
+            }
+        }
+    }
+
+    private void handleMoveRejected(MoveRejectedMessage move) {
+        String reasonMessage = "";
+        MoveRejectedMessage.RejectReason reason = move.getReason();
+        Alert alert = new Alert(AlertType.WARNING);
+
+        switch (reason) {
+            case INVALID_MOVE:
+                reasonMessage = "Invalid move at row " + move.getRow() + " column " + move.getCol() + ".";
+                break;
+            case NOT_CURRENT_TURN:
+                String symbol = "";
+                if (this.playerSymbol.equals(PLAYER_X))
+                    symbol = PLAYER_O;
+                else
+                    symbol = PLAYER_X;
+                reasonMessage = "Not currently your turn. Currently " + symbol + "'s turn.";
+                break;
+            case INVALID_PLAYER:
+                reasonMessage = "You are not a player in this game. Exiting game.";
+                alert.setOnCloseRequest((event) -> { handleGameExit(); });
+                break;
+            case NO_SECOND_PLAYER:
+                reasonMessage = "No second player detected. Exiting game.";
+                alert.setOnCloseRequest((event) -> { handleGameExit(); });
+                break;
+            case INVALID_SYMBOL:
+                reasonMessage = "Invalid player symbol detected. Exiting game.";
+                alert.setOnCloseRequest((event) -> { handleGameExit(); });
+                break;
+            case INVALID_STATUS:
+                reasonMessage = "Invalid game status. Exiting game.";
+                alert.setOnCloseRequest((event) -> { handleGameExit(); });
+                break;
+            case NO_GAME_EXISTS:
+                reasonMessage = "No game exists for game ID " + move.getGameId();
+                alert.setOnCloseRequest((event) -> { handleGameExit(); });
+                break;
+            default:
+                reasonMessage = "Invalid message received from server. Exiting game.";
+                alert.setOnCloseRequest((event) -> { handleGameExit(); });
+        }
+
+        alert.setContentText(reasonMessage);
+        alert.show();
+    }
+
+    private void handleGameExit() {
+        // TODO: handle game exit -> unsubscribe, send delete game message to GameController
     }
 
     //Updates the GUI and board after the computer has made a move.
-    private void updateGUI(int index) {
-            String computerMove = "";
+    private void updateGUI(int index, String symbol) {
             Color color;
 
-            int buttonMove = 0;
-
-            // TODO: rework or remove
-            if (true){
-                computerMove = PLAYER_X;
+            if (symbol.equals(PLAYER_X)){
                 color = Color.RED;
-                buttonMove = 1;
+            }else{
+                color = Color.BLUE;
             }
-            // else{
-            //     computerMove = PLAYER_O;
-            //     color = Color.BLUE;
-            //     buttonMove = -1;
-
-            // }
 
             //Update Gui
             switch(index) {
                 case 0:
-                    topLeft.setText(computerMove);
+                    topLeft.setText(symbol);
                     topLeft.setTextFill(color);
                     topLeft.setMouseTransparent(true);
                     break;
                 case 1:
-                    topCenter.setText(computerMove);
+                    topCenter.setText(symbol);
                     topCenter.setTextFill(color);
                     topCenter.setMouseTransparent(true);
                     break;
                 case 2:
-                    topRight.setText(computerMove);
+                    topRight.setText(symbol);
                     topRight.setTextFill(color);
                     topRight.setMouseTransparent(true);
                     break;
                 case 3:
-                    middleLeft.setText(computerMove);
+                    middleLeft.setText(symbol);
                     middleLeft.setTextFill(color);
                     middleLeft.setMouseTransparent(true);
                     break;
                 case 4:
-                    middleCenter.setText(computerMove);
+                    middleCenter.setText(symbol);
                     middleCenter.setTextFill(color);
                     middleCenter.setMouseTransparent(true);
                     break;
                 case 5:
-                    middleRight.setText(computerMove);
+                    middleRight.setText(symbol);
                     middleRight.setTextFill(color);
                     middleRight.setMouseTransparent(true);
                     break;
                 case 6:
-                    bottomLeft.setText(computerMove);
+                    bottomLeft.setText(symbol);
                     bottomLeft.setTextFill(color);
                     bottomLeft.setMouseTransparent(true);
                     break;
                 case 7:
-                    bottomCenter.setText(computerMove);
+                    bottomCenter.setText(symbol);
                     bottomCenter.setTextFill(color);
                     bottomCenter.setMouseTransparent(true);
                     break;
                 case 8:
-                    bottomRight.setText(computerMove);
+                    bottomRight.setText(symbol);
                     bottomRight.setTextFill(color);
                     bottomRight.setMouseTransparent(true);
                     break;
                 default:
-                    System.out.println("Invalid computer move index");
+                    System.err.println("Invalid move index");
             }
-
-            // Update Back End Board Grid
-            switch(index) {
-                case 0:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 1:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 2:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 3:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 4:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 5:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 6:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 7:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                case 8:
-                    boardGrid.set(index, buttonMove);
-                    break;
-                default:
-                    System.out.println("Invalid computer move index");
-            }
-
-            // Increment spaces used up for winnerCheck()
-            numActiveTiles++; // Not checking if its an overwrite or not.
-
     }
 
     //Checks if left or right click happenes on a tile and if left click it puts an X and right click puts a O on the board for when there is 2 human players. 
     public void toggleBoardButton(MouseEvent event) {
-        MouseButton button = event.getButton();
         Button boardButton = (Button)event.getSource();
         String buttonID = boardButton.getId();
-        int buttonMove = 0;
-        if (button.compareTo(MouseButton.PRIMARY) == 0) {
-            buttonMove = 1;
-            if (boardButton.getText().isEmpty()) {
-                numActiveTiles++;
-            }
-            boardButton.setText(PLAYER_X);
-            boardButton.setTextFill(Color.RED);
-        }
-        else if (button.compareTo(MouseButton.SECONDARY) == 0){
-            buttonMove = -1;
-            if (boardButton.getText().isEmpty()) {
-                numActiveTiles++;
-            }
-            boardButton.setText(PLAYER_O);
-            boardButton.setTextFill(Color.BLUE);
-        } else {
-            System.out.println("unknown button clicked");
-        }
 
-        // Update boardGrid array
-        // -1 = X   0 = empty   1 = O
         switch(buttonID) {
             case "topLeft":
-                boardGrid.set(0, buttonMove);
+                try {
+                    RouterHandler.getRouterClient().send(GAME_CHANNEL, new MakeMoveMessage(this.clientGameID, this.clientPlayerID, 0, 0));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 break;
             case "topCenter":
-                boardGrid.set(1, buttonMove);
+                try {
+                    RouterHandler.getRouterClient().send(GAME_CHANNEL, new MakeMoveMessage(this.clientGameID, this.clientPlayerID, 0, 1));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 break;
             case "topRight":
-                boardGrid.set(2, buttonMove);
+                try {
+                    RouterHandler.getRouterClient().send(GAME_CHANNEL, new MakeMoveMessage(this.clientGameID, this.clientPlayerID, 0, 2));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 break;
             case "middleLeft":
-                boardGrid.set(3, buttonMove);
+                try {
+                    RouterHandler.getRouterClient().send(GAME_CHANNEL, new MakeMoveMessage(this.clientGameID, this.clientPlayerID, 1, 0));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 break;
             case "middleCenter":
-                boardGrid.set(4, buttonMove);
+                try {
+                    RouterHandler.getRouterClient().send(GAME_CHANNEL, new MakeMoveMessage(this.clientGameID, this.clientPlayerID, 1, 1));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 break;
             case "middleRight":
-                boardGrid.set(5, buttonMove);
+                try {
+                    RouterHandler.getRouterClient().send(GAME_CHANNEL, new MakeMoveMessage(this.clientGameID, this.clientPlayerID, 1, 2));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 break;
             case "bottomLeft":
-                boardGrid.set(6, buttonMove);
+                try {
+                    RouterHandler.getRouterClient().send(GAME_CHANNEL, new MakeMoveMessage(this.clientGameID, this.clientPlayerID, 2, 0));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 break;
             case "bottomCenter":
-                boardGrid.set(7, buttonMove);
+                try {
+                    RouterHandler.getRouterClient().send(GAME_CHANNEL, new MakeMoveMessage(this.clientGameID, this.clientPlayerID, 2, 1));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 break;
             case "bottomRight":
-                boardGrid.set(8, buttonMove);
+                try {
+                    RouterHandler.getRouterClient().send(GAME_CHANNEL, new MakeMoveMessage(this.clientGameID, this.clientPlayerID, 2, 2));
+                } catch (IOException e) {
+                    System.out.println("ERROR: Failed to send MakeMoveMessage!");
+                }
                 break;
             default:
                 break;
         }
-        System.out.println(boardGrid);      // Print out boardGrid to check states
-        this.dispayWinnerCheck();
+    }
 
-        if (this.isOnePlayerGame){
-            this.computerTurn();
-            this.dispayWinnerCheck();
-        }
-
-        //disable the button to disallow
-        // overwriting moves (can be removed if you want to allow players to change their move before the game ends)
-        boardButton.setMouseTransparent(true);
+    public void handleLeaveButton() {
+        // TODO: handle leaving the game
     }
 
     //Checks if there is a winner and if there is a winner or a tie it will diplay a popup on weather either happened and when the popup is closed it resets the board.
     public void dispayWinnerCheck(){
-        String outcomeString = winnerCheck();
+        // TODO: update with actual winner, no longer a "check" (GameControllerMain does the checking)
+        String outcomeString = "Display Winner";
 
         if (outcomeString != null) {
             try { 
@@ -255,7 +381,7 @@ public class BoardController {
                 // set Label text to outcome
                 outcomePopupController.setWinner(outcomeString);
                 // sets up popup to reset board when closed
-                outcomePopup.setOnHidden(hiddenEvent -> resetBoard());
+                // outcomePopup.setOnHidden(hiddenEvent -> resetBoard());
                 // display popup
                 outcomePopup.show();
 
@@ -265,129 +391,5 @@ public class BoardController {
                 System.out.println(e.getMessage());
             }
         }
-    }
-
-    //Checks if there is a winner or tie game and returns null if neither is the case.
-    private String winnerCheck() {
-        // check all rows
-        String rowsResult = checkRows();
-        // check all columns
-        String columnsResult = checkColumns();
-        // check both diagonals
-        String diagonalsResult = checkDiagonals();
-
-        String outcomeString = " wins";
-        if (rowsResult != null)
-            outcomeString = rowsResult + outcomeString;
-        else if (columnsResult != null)
-            outcomeString = columnsResult + outcomeString;
-        else if (diagonalsResult != null)
-            outcomeString = diagonalsResult + outcomeString;
-        else if (numActiveTiles == (GRID_SIZE)) {
-            outcomeString = "Tie game";
-        } else 
-            outcomeString = null;
-
-        return outcomeString;
-    } 
-
-    private String checkRows() {
-        // check first row
-        String stringCheck = topLeft.getText();
-        if (!stringCheck.isEmpty()) {
-            if ((topCenter.getText().compareTo(stringCheck) == 0) && (topRight.getText().compareTo(stringCheck) == 0))
-                return stringCheck;
-        }
-        // check middle row
-        stringCheck = middleLeft.getText();
-        if (!stringCheck.isEmpty()) {
-            if ((middleCenter.getText().compareTo(stringCheck) == 0) && (middleRight.getText().compareTo(stringCheck) == 0))
-                return stringCheck;
-        }
-        // check bottom row
-        stringCheck = bottomLeft.getText();
-        if (!stringCheck.isEmpty()) {
-            if ((bottomCenter.getText().compareTo(stringCheck) == 0) && (bottomRight.getText().compareTo(stringCheck) == 0))
-                return stringCheck;
-        }
-        // if all checks fail, return null
-        return null;
-    }
-
-    private String checkColumns() {
-        // check first column
-        String stringCheck = topLeft.getText();
-        if (!stringCheck.isEmpty()) {
-            if ((middleLeft.getText().compareTo(stringCheck) == 0) && (bottomLeft.getText().compareTo(stringCheck) == 0))
-                return stringCheck;
-        }
-        // check middle column
-        stringCheck = topCenter.getText();
-        if (!stringCheck.isEmpty()) {
-            if ((middleCenter.getText().compareTo(stringCheck) == 0) && (bottomCenter.getText().compareTo(stringCheck) == 0))
-                return stringCheck;
-        }
-        // check last column
-        stringCheck = topRight.getText();
-        if (!stringCheck.isEmpty()) {
-            if ((middleRight.getText().compareTo(stringCheck) == 0) && (bottomRight.getText().compareTo(stringCheck) == 0))
-                return stringCheck;
-        }
-        // if all checks fail, return null
-        return null;
-    }
-
-    private String checkDiagonals() {
-        // check top-left to bottom-right diagonal
-        String stringCheck = topLeft.getText();
-        if (!stringCheck.isEmpty()) {
-            if ((middleCenter.getText().compareTo(stringCheck) == 0) && (bottomRight.getText().compareTo(stringCheck) == 0))
-                return stringCheck;
-        }
-        // check bottom-left to top-right diagonal
-        stringCheck = bottomLeft.getText();
-        if (!stringCheck.isEmpty()) {
-            if ((middleCenter.getText().compareTo(stringCheck) == 0) && (topRight.getText().compareTo(stringCheck) == 0))
-                return stringCheck;
-        }
-        // if all checks fail, return null
-        return null;
-    }
-
-    // resets the board by setting all button text to blank and number of active tiles to 0.
-    private void resetBoard() {
-        topLeft.setText("");
-        topCenter.setText("");
-        topRight.setText("");
-        middleLeft.setText("");
-        middleCenter.setText("");
-        middleRight.setText("");
-        bottomLeft.setText("");
-        bottomCenter.setText("");
-        bottomRight.setText("");
-        numActiveTiles = 0;
-
-        topLeft.setMouseTransparent(false);
-        topCenter.setMouseTransparent(false);  
-        topRight.setMouseTransparent(false);
-        middleLeft.setMouseTransparent(false);
-        middleCenter.setMouseTransparent(false);
-        middleRight.setMouseTransparent(false);
-        bottomLeft.setMouseTransparent(false);
-        bottomCenter.setMouseTransparent(false);
-        bottomRight.setMouseTransparent(false);
-
-        // Clear boardGrid
-        for (int i = 0; i < GRID_SIZE; i++) {
-            boardGrid.set(i, 0);
-        }
-    }
-
-    // TODO: remove
-    public void computerTurn() {
-        // create the computer
-        int move = 0;
-        this.updateGUI(move);
-
     }
 }
