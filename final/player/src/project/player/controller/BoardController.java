@@ -17,6 +17,7 @@ import javafx.stage.Stage;
 import project.client.MessageListener;
 import project.player.handler.RouterHandler;
 import project.protocol.GameStatus;
+import project.protocol.LeaveGameMessage;//made but make the leave game thing
 import project.protocol.MakeMoveMessage;
 import project.protocol.Move;
 import project.protocol.MoveAcceptedMessage;
@@ -123,7 +124,7 @@ public class BoardController {
     }
 
     private void handleMoveAccepted(MoveAcceptedMessage message) {
-
+        if()
         int index = Move.toIndex(message.getRow(), message.getCol());
         String symbol = "";
         String nextSymbol = "";
@@ -162,11 +163,11 @@ public class BoardController {
             alert.show();
         } else {
             if (gameStatus == GameStatus.PLAYER_X_WIN) {
-                // TODO: display winning screen, leave game
+                dispayWinnerCheck(this.playerSymbol.equals(PLAYER_X) ? "win" : "loss");
             } else if (gameStatus == GameStatus.PLAYER_O_WIN) {
-                // TODO: display winning screen, leave game
+                dispayWinnerCheck(this.playerSymbol.equals(PLAYER_O) ? "win" : "loss");
             } else {
-                // TODO: display tie game screen, leave game
+                dispayWinnerCheck("draw");
             }
         }
     }
@@ -212,13 +213,22 @@ public class BoardController {
                 reasonMessage = "Invalid message received from server. Exiting game.";
                 alert.setOnCloseRequest((event) -> { handleGameExit(); });
         }
-
+ 
         alert.setContentText(reasonMessage);
         alert.show();
     }
 
+    //Exits game and unsubscribes player from the game channel
     private void handleGameExit() {
-        // TODO: handle game exit -> unsubscribe, send delete game message to GameController
+        try {
+            RouterHandler.getRouterClient().send(GAME_CHANNEL + clientGameID, new LeaveGameMessage(clientPlayerID, clientGameID));
+            RouterHandler.getRouterClient().unsubscribe(GAME_CHANNEL + clientGameID);
+            RouterHandler.getRouterClient().unsubscribe(PLAYER_CHANNEL + clientPlayerID);
+            //maybe add subscribe to lobby
+        } catch (IOException e) {
+            System.err.println("ERROR: Failed to send LeaveGameMessage or unsubscribe.");
+            e.printStackTrace();
+        }
     }
 
     //Updates the GUI and board after the computer has made a move.
@@ -358,13 +368,11 @@ public class BoardController {
     }
 
     public void handleLeaveButton() {
-        // TODO: handle leaving the game
+        handleGameExit();
     }
 
     //Checks if there is a winner and if there is a winner or a tie it will diplay a popup on weather either happened and when the popup is closed it resets the board.
-    public void dispayWinnerCheck(){
-        // TODO: update with actual winner, no longer a "check" (GameControllerMain does the checking)
-        String outcomeString = "Display Winner";
+    public void dispayWinnerCheck(String outcomeString){
 
         if (outcomeString != null) {
             try { 
@@ -380,8 +388,8 @@ public class BoardController {
                 OutcomePopupController outcomePopupController = outcomeLoader.getController();
                 // set Label text to outcome
                 outcomePopupController.setWinner(outcomeString);
-                // sets up popup to reset board when closed
-                // outcomePopup.setOnHidden(hiddenEvent -> resetBoard());
+                // sets up popup to unsubscribe and clean up when closed
+                outcomePopup.setOnHidden(hiddenEvent -> handleGameExit());
                 // display popup
                 outcomePopup.show();
 
