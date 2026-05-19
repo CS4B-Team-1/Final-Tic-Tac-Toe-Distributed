@@ -21,6 +21,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Alert.AlertType;
 
 public class LobbyController {
 
@@ -57,7 +58,9 @@ public class LobbyController {
 
             System.out.println(prefix + senderId + " Games Started on Game ID:  " + startGameMessage.getGameId()); 
             handleGameStarted(startGameMessage);
-        }else{
+        } else if (message instaceof GameFullMessage gameFullMessage) {
+            handleGameFull();
+        } else{
 
             System.out.println(prefix + senderId + " sent: " + message); 
         }
@@ -167,6 +170,12 @@ public class LobbyController {
         });
     }
 
+    private void handleGameFull() {
+        Alert gameFullAlert = new Alert(AlertType.WARNING);
+        gameFullAlert.setContentText("Game is currently full. Please join other game");
+        gameFullAlert.show();
+    }
+
     private void handleGameNotFound(GameNotFoundMessage gameNotFound) {
 
         Platform.runLater(() -> {
@@ -231,10 +240,17 @@ public class LobbyController {
                 // boardController.setGameId(startGameMessage.getGameId());
                 // boardController.setPlayerId(usernameData.getPlayerId());
                 boardController.createGame(startGameMessage.getGameId(), usernameData.getPlayerId(), startGameMessage);
+                boardController.setLobbyScene(SceneHandler.getStage().getScene());
+
+                joinButton.setDisable(false);
+                quitButton.setDisable(false);
+                statusLabel.setText("");
 
                 // switch scene to game board
                 Scene scene = new Scene(root);
                 SceneHandler.getStage().setScene(scene);
+
+
 
             } catch (Exception e) { e.printStackTrace();}
 

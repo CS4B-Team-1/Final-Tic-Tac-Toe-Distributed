@@ -39,6 +39,10 @@ public class BoardController {
 
     private String clientGameID;
     private String clientPlayerID;
+    private Scene lobbyScene;
+
+    volatile private MessageListener gameListener = null;
+    volatile private MessageListener playerListener = null;
 
     public void setGameId(String gameId) {
         this.clientGameID = gameId;
@@ -46,6 +50,14 @@ public class BoardController {
 
     public void setPlayerId(String playerId) {
         this.clientPlayerID = playerId;
+    }
+
+    private Scene getLobbyScene() {
+        return lobbyScene;
+    }
+
+    public void setLobbyScene(Scene lobbyScene) {
+        this.lobbyScene = lobbyScene;
     }
 
     @FXML
@@ -129,8 +141,13 @@ public class BoardController {
                 System.out.println();
             };
 
-            RouterHandler.getRouterClient().subscribe(GAME_CHANNEL + this.clientGameID, gameListener);
-            RouterHandler.getRouterClient().subscribe(PLAYER_CHANNEL + this.clientPlayerID, playerListener);
+            if (this.playerListener == null && this.gameListener == null) {
+                this.playerListener = playerListener;
+                this.gameListener = gameListener;
+            }
+
+            RouterHandler.getRouterClient().subscribe(GAME_CHANNEL + this.clientGameID, this.gameListener);
+            RouterHandler.getRouterClient().subscribe(PLAYER_CHANNEL + this.clientPlayerID, this.playerListener);
 
         } catch (IOException e) {
             Alert alert = new Alert(AlertType.ERROR);
@@ -251,13 +268,14 @@ public class BoardController {
             RouterHandler.getRouterClient().unsubscribe(GAME_CHANNEL + this.clientGameID);
             // Bring player back to lobby
             Platform.runLater(() -> {
-                try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
-                    SceneHandler.getStage().setScene(new Scene(loader.load()));
-                } catch (IOException e) {
-                    System.out.println("ERROR: exitGame Screen Switch Failed!");
-                    System.out.println(e.getMessage());
-                }
+                SceneHandler.getStage().setScene(getLobbyScene());
+                // try {
+                //     FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
+                //     SceneHandler.getStage().setScene(getLobbyScene());
+                // } catch (IOException e) {
+                //     System.out.println("ERROR: exitGame Screen Switch Failed!");
+                //     System.out.println(e.getMessage());
+                // }
             });
         } catch (Exception e) {
             System.out.println("ERROR: exitGame Failed!");
@@ -273,11 +291,17 @@ public class BoardController {
         try {
             // Send LeaveGameMessage
             RouterHandler.getRouterClient().send(GAME_CHANNEL + this.clientGameID, new LeaveGameMessage(this.clientPlayerID, this.clientGameID));
+
+            // remove the listeners
+            RouterHandler.getRouterClient().removeMessageListener(GAME_CHANNEL + this.clientGameID, this.gameListener);
+            RouterHandler.getRouterClient().removeMessageListener(PLAYER_CHANNEL + this.clientPlayerID, this.playerListener);
+
             // Unsubscribe from the game
             RouterHandler.getRouterClient().unsubscribe(GAME_CHANNEL + this.clientGameID);
+
             // Bring player back to the lobby
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
-            SceneHandler.getStage().setScene(new Scene(loader.load()));
+            // FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
+            SceneHandler.getStage().setScene(getLobbyScene());
         } catch (Exception e) {
             System.out.println("ERROR: Handling Game Exit Failed!");
         }
