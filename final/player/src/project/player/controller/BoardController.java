@@ -232,32 +232,24 @@ public class BoardController {
             alert.setTitle("Notification");
             alert.setHeaderText("Game Ended");
             alert.setContentText("Opponent has left the game.");
-            alert.show();
+            alert.showAndWait();
         });
         try {
             // Unsubscribe player from game
             RouterHandler.getRouterClient().unsubscribe(GAME_CHANNEL + this.clientGameID);
-            /*
-            // create new window for popup
-            // create FXML loader object to load
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
-            // load FXML onto Scene
-            Scene scene = new Scene(loader.load());
-            SceneHandler.getStage().setScene(scene);
-            */
-/*
             // Bring player back to lobby
-            System.out.println("Load in lobby");
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
-            System.out.println("Set lobby");
-            System.out.println("Current player ID is " + this.clientPlayerID);
-            SceneHandler.getStage().setScene(new Scene(loader.load()));
-            System.out.println("2Current player ID is " + this.clientPlayerID);
-*/
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
-            SceneHandler.getStage().setScene(new Scene(loader.load()));
+            Platform.runLater(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
+                    SceneHandler.getStage().setScene(new Scene(loader.load()));
+                } catch (IOException e) {
+                    System.out.println("ERROR: exitGame Screen Switch Failed!");
+                    System.out.println(e.getMessage());
+                }
+            });
         } catch (Exception e) {
-            System.out.println("ERROR: Exit Game Failed!");
+            System.out.println("ERROR: exitGame Failed!");
+            System.out.println(e.getMessage());
         }
         return;
     }

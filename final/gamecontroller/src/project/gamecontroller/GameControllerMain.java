@@ -96,8 +96,6 @@ public class GameControllerMain {
     // When one player leaves, unsubscribe the other player and the game
     private static void handleLeaveGame(RouterClient client, LeaveGameMessage leaveGame) {
         try {
-            // Send LeaveGameMessage to other player
-            client.send("/game/" + leaveGame.getGameId(), new LeaveGameMessage(leaveGame.getPlayerId(), leaveGame.getGameId()));
             // Unsubscribe the game
             client.unsubscribe(leaveGame.getGameId());
             // Remove the game from the list of games
