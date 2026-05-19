@@ -38,7 +38,6 @@ public class LobbyController {
     */
     private UsernameData usernameData = UsernameData.getInstance(); //access username data through here
 
-    //TODO: dont disable the quit button and handle for when the player press this button while theyre waiting for another player.
     // - must handle the case of sending leave game message when the player presses quit while waiting for another player to join.
     // - DONT SEND (or maybe send a LeaveGameMessage with  null attributes) a LeaveGameMessage before the user has created a game.
     private MessageListener Lobbylistener = (channel, senderId, message) -> {
@@ -161,7 +160,6 @@ public class LobbyController {
 
             // Disable buttons to control flow
             // player must press the top right X (or alt+f4 etc.) which calls setOnCloseRequest().
-            //TODO: dont disable the quit button and handle for when the player press this button while theyre waiting for another player.
             // - must handle the case of sending leave game message when the player presses quit while waiting for another player to join.
             // - DONT SEND (or maybe send a LeaveGameMessage with  null attributes) a LeaveGameMessage before the user has created a game.
             joinButton.setDisable(true);
