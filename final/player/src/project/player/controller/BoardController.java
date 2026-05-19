@@ -2,6 +2,8 @@ package project.player.controller;
 
 import java.io.IOException;
 
+import javax.lang.model.util.AbstractAnnotationValueVisitorPreview;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -16,7 +18,9 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import project.client.MessageListener;
 import project.player.handler.RouterHandler;
+import project.player.handler.SceneHandler;
 import project.protocol.GameStatus;
+import project.protocol.LeaveGameMessage;
 import project.protocol.MakeMoveMessage;
 import project.protocol.Move;
 import project.protocol.MoveAcceptedMessage;
@@ -90,6 +94,8 @@ public class BoardController {
                     Platform.runLater(() -> {
                         handleMoveAccepted(move);
                     });
+                } else if (message instanceof LeaveGameMessage leaveGame) {
+                    exitGame(leaveGame);
                 } else {
                     System.err.println("Undefined message for BoardController: " + message);
                 }
@@ -217,9 +223,68 @@ public class BoardController {
         alert.show();
     }
 
-    private void handleGameExit() {
-        // TODO: handle game exit -> unsubscribe, send delete game message to GameController
+    // exitGame function
+    // Exit game if other player has left the game
+    private void exitGame(LeaveGameMessage leaveGame) {
+        System.out.println("exitGame ID is: " + this.clientPlayerID);
+        /*
+        String reasonMessage = "Opponent has left the game.";
+        Alert alert = new Alert(AlertType.);
+        alert.setContentText(reasonMessage);
+        alert.show();
+*/
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Notification");
+            alert.setHeaderText("Game Ended");
+            alert.setContentText("Opponent has left the game.");
+        });
+        try {
+            // Unsubscribe player from game
+            RouterHandler.getRouterClient().unsubscribe(GAME_CHANNEL + this.clientGameID);
+            /*
+            // create new window for popup
+            // create FXML loader object to load
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
+            // load FXML onto Scene
+            Scene scene = new Scene(loader.load());
+            SceneHandler.getStage().setScene(scene);
+            */
+/*
+            // Bring player back to lobby
+            System.out.println("Load in lobby");
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
+            System.out.println("Set lobby");
+            System.out.println("Current player ID is " + this.clientPlayerID);
+            SceneHandler.getStage().setScene(new Scene(loader.load()));
+            System.out.println("2Current player ID is " + this.clientPlayerID);
+*/
+        } catch (Exception e) {
+            System.out.println("ERROR: Exit Game Failed!");
+        }
+        return;
     }
+
+    // handleGameExit function
+    // Exits player from game
+    private void handleGameExit() {
+        // Unsubscribe players from channel
+        try {
+            System.out.println("handleGameExit ID is: " + this.clientPlayerID);
+            // Send LeaveGameMessage
+            RouterHandler.getRouterClient().send(GAME_CHANNEL + this.clientGameID, new LeaveGameMessage(this.clientPlayerID, this.clientGameID));
+            // Unsubscribe from the game
+            RouterHandler.getRouterClient().unsubscribe(GAME_CHANNEL + this.clientGameID);
+            // Bring player back to the lobby
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
+            SceneHandler.getStage().setScene(new Scene(loader.load()));
+        } catch (Exception e) {
+            System.out.println("ERROR: Handling Game Exit Failed!");
+        }
+        return;
+    }
+
+
 
     //Updates the GUI and board after the computer has made a move.
     private void updateGUI(int index, String symbol) {
@@ -358,7 +423,7 @@ public class BoardController {
     }
 
     public void handleLeaveButton() {
-        // TODO: handle leaving the game
+        handleGameExit();
     }
 
     //Checks if there is a winner and if there is a winner or a tie it will diplay a popup on weather either happened and when the popup is closed it resets the board.

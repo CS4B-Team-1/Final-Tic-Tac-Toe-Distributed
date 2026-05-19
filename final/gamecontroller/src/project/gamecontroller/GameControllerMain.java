@@ -64,9 +64,8 @@ public class GameControllerMain {
                 } else if (message instanceof JoinGameMessage joinGame) {
                     handleJoinGame(client, channel, joinGame);
                 }else if (message instanceof LeaveGameMessage leaveGame) {
-                    System.out.println("Player " + leaveGame.getPlayerId() + " left game " + leaveGame.getGameId());
-                    //TODO: create handleLeaveGame()
-                    // handleLeaveGame(leaveGame);
+                    System.out.println("HandleLeaveGame called!");
+                    handleLeaveGame(client, leaveGame);
                 }else{
                     System.out.println("Message: " + message);
                 }
@@ -93,6 +92,23 @@ public class GameControllerMain {
             System.out.println("GameController stopped.");
         }
     }
+
+    // handleLeaveGame() function
+    // When one player leaves, unsubscribe the other player and the game
+    private static void handleLeaveGame(RouterClient client, LeaveGameMessage leaveGame) {
+        System.out.println("Player " + leaveGame.getPlayerId() + " left game " + leaveGame.getGameId());
+        try {
+            // Send LeaveGameMessage to other player
+            client.send("/game/" + leaveGame.getGameId(), new LeaveGameMessage(leaveGame.getPlayerId(), leaveGame.getGameId()));
+            // Unsubscribe the game
+            client.unsubscribe(leaveGame.getGameId());
+            // Remove the game from the list of games
+            games.remove(leaveGame.getGameId());
+        } catch (Exception e) {
+            System.out.println("ERROR: Failed to send LeaveGameMessage to other player!");
+        }
+    }
+
 
     /*
         Private helper for handleJoinGame()
