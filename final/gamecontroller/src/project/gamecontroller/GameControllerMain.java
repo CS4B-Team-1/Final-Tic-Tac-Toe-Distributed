@@ -96,10 +96,23 @@ public class GameControllerMain {
     // When one player leaves, unsubscribe the other player and the game
     private static void handleLeaveGame(RouterClient client, LeaveGameMessage leaveGame) {
         try {
+            List<String> players = new ArrayList<>(games.get(leaveGame.getGameId()).getPlayers().keySet());
             // Unsubscribe the game
-            client.unsubscribe(leaveGame.getGameId());
+            //client.unsubscribe(leaveGame.getGameId());
             // Remove the game from the list of games
             games.remove(leaveGame.getGameId());
+            
+            // grab the player ID of the other player
+            String otherPlayerId = "";
+            // just gets the first instance of a different player ID from the one who made the move
+            for (String player: players) {
+                if (!player.equals(leaveGame.getPlayerId())) {
+                    otherPlayerId = player;
+                    break;
+                }
+            }
+            client.send(PLAYERS + otherPlayerId, new LeaveGameMessage(otherPlayerId, leaveGame.getGameId()));
+
         } catch (Exception e) {
             System.out.println("ERROR: Failed to send LeaveGameMessage to other player!");
         }

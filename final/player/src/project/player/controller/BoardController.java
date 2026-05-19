@@ -83,6 +83,17 @@ public class BoardController {
             this.playerSymbol = startGameMessage.getSymbol();
             this.currentTurn = startGameMessage.getStartingPlayerId();
 
+            SceneHandler.getStage().setOnCloseRequest((event) -> {
+                 try {
+                    RouterHandler.getRouterClient().send(GAME_CHANNEL,
+                        new LeaveGameMessage(this.clientPlayerID, this.clientGameID)
+                    );
+                    } catch (IOException e) {
+                        System.out.println("Failed to send LeaveGameMessage on window close.");
+                        e.printStackTrace();
+                    }
+            });
+
             // creates a listener for the specific game's channel for the player
             MessageListener gameListener = (channel, senderId, message) -> {
                 System.out.println("[" + senderId + "] message received");
@@ -94,16 +105,14 @@ public class BoardController {
                     Platform.runLater(() -> {
                         handleMoveAccepted(move);
                     });
-                } else if (message instanceof LeaveGameMessage leaveGame) {
-                    exitGame(leaveGame);
-                } else {
+                }  else {
                     System.err.println("Undefined message for BoardController: " + message);
                 }
                 System.out.println();
             };
 
             // creates a separate listener to add to the player's channel to receive error message like MoveRejectedMessage
-            MessageListener errorListener = (channel, senderId, message) -> {
+            MessageListener playerListener = (channel, senderId, message) -> {
                 System.out.println("[" + senderId + "] message received");
                 System.out.println("Channel: " + channel);
                 System.out.println("Sender: " + senderId);
@@ -112,12 +121,16 @@ public class BoardController {
                     Platform.runLater(() -> {
                         handleMoveRejected(move);
                     });
+                } else if (message instanceof LeaveGameMessage leaveGame) {
+                    exitGame(leaveGame);
+                } else {
+                    System.err.println("Undefined message for BoardController: " + message);
                 }
                 System.out.println();
             };
 
             RouterHandler.getRouterClient().subscribe(GAME_CHANNEL + this.clientGameID, gameListener);
-            RouterHandler.getRouterClient().subscribe(PLAYER_CHANNEL + this.clientPlayerID, errorListener);
+            RouterHandler.getRouterClient().subscribe(PLAYER_CHANNEL + this.clientPlayerID, playerListener);
 
         } catch (IOException e) {
             Alert alert = new Alert(AlertType.ERROR);
