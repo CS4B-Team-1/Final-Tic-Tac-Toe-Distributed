@@ -171,6 +171,7 @@ public class GameControllerMain {
             }
             if(game.getPlayers().size() == 2){
                 client.send(PLAYERS + playerId, new GameFullMessage());
+                return;
             }
 
             if (!game.getPlayers().containsKey(joinGameMessage.getPlayerId())) {

@@ -58,7 +58,7 @@ public class LobbyController {
 
             System.out.println(prefix + senderId + " Games Started on Game ID:  " + startGameMessage.getGameId()); 
             handleGameStarted(startGameMessage);
-        } else if (message instaceof GameFullMessage gameFullMessage) {
+        } else if (message instanceof GameFullMessage) {
             handleGameFull();
         } else{
 
@@ -91,19 +91,18 @@ public class LobbyController {
             System.out.println(usernameData.getUsername() + " joined: " + LOBBY);
 
         } catch (Exception e) {
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Connection Failed");
+                alert.setHeaderText(null);
+                alert.setContentText(
+                        "Failed to Subscribe to " + LOBBY + "."
+                );
+                alert.show();
 
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Connection Failed");
-            alert.setHeaderText(null);
-            alert.setContentText(
-                    "Failed to Subscribe to " + LOBBY + "."
-            );
-            alert.show();
-
-            e.printStackTrace();
-
+                e.printStackTrace();
+            });
         }
-
     }
 
     @FXML
@@ -171,9 +170,13 @@ public class LobbyController {
     }
 
     private void handleGameFull() {
-        Alert gameFullAlert = new Alert(AlertType.WARNING);
-        gameFullAlert.setContentText("Game is currently full. Please join other game");
-        gameFullAlert.show();
+        Platform.runLater(() -> {
+            Alert gameFullAlert = new Alert(AlertType.WARNING);
+            gameFullAlert.setContentText("Game is currently full. Please join other game");
+            gameFullAlert.show();
+
+            statusLabel.setText("");
+        });
     }
 
     private void handleGameNotFound(GameNotFoundMessage gameNotFound) {
