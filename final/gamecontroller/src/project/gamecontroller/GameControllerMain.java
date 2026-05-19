@@ -64,7 +64,6 @@ public class GameControllerMain {
                 } else if (message instanceof JoinGameMessage joinGame) {
                     handleJoinGame(client, channel, joinGame);
                 }else if (message instanceof LeaveGameMessage leaveGame) {
-                    System.out.println("HandleLeaveGame called!");
                     handleLeaveGame(client, leaveGame);
                 }else{
                     System.out.println("Message: " + message);
@@ -96,7 +95,6 @@ public class GameControllerMain {
     // handleLeaveGame() function
     // When one player leaves, unsubscribe the other player and the game
     private static void handleLeaveGame(RouterClient client, LeaveGameMessage leaveGame) {
-        System.out.println("Player " + leaveGame.getPlayerId() + " left game " + leaveGame.getGameId());
         try {
             // Send LeaveGameMessage to other player
             client.send("/game/" + leaveGame.getGameId(), new LeaveGameMessage(leaveGame.getPlayerId(), leaveGame.getGameId()));

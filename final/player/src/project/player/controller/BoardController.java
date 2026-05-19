@@ -226,18 +226,13 @@ public class BoardController {
     // exitGame function
     // Exit game if other player has left the game
     private void exitGame(LeaveGameMessage leaveGame) {
-        System.out.println("exitGame ID is: " + this.clientPlayerID);
-        /*
-        String reasonMessage = "Opponent has left the game.";
-        Alert alert = new Alert(AlertType.);
-        alert.setContentText(reasonMessage);
-        alert.show();
-*/
+        // Send notification that other player left the game
         Platform.runLater(() -> {
             Alert alert = new Alert(AlertType.INFORMATION);
             alert.setTitle("Notification");
             alert.setHeaderText("Game Ended");
             alert.setContentText("Opponent has left the game.");
+            alert.show();
         });
         try {
             // Unsubscribe player from game
@@ -259,6 +254,8 @@ public class BoardController {
             SceneHandler.getStage().setScene(new Scene(loader.load()));
             System.out.println("2Current player ID is " + this.clientPlayerID);
 */
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
+            SceneHandler.getStage().setScene(new Scene(loader.load()));
         } catch (Exception e) {
             System.out.println("ERROR: Exit Game Failed!");
         }
@@ -270,7 +267,6 @@ public class BoardController {
     private void handleGameExit() {
         // Unsubscribe players from channel
         try {
-            System.out.println("handleGameExit ID is: " + this.clientPlayerID);
             // Send LeaveGameMessage
             RouterHandler.getRouterClient().send(GAME_CHANNEL + this.clientGameID, new LeaveGameMessage(this.clientPlayerID, this.clientGameID));
             // Unsubscribe from the game
