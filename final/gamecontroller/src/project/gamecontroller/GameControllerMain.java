@@ -169,6 +169,9 @@ public class GameControllerMain {
                 client.send(PLAYERS + playerId, new GameNotFoundMessage(gameId));
                 return;
             }
+            if(game.getPlayers().size() == 2){
+                client.send(PLAYERS + playerId, new GameFullMessage());
+            }
 
             if (!game.getPlayers().containsKey(joinGameMessage.getPlayerId())) {
                 String symbol = "O";
