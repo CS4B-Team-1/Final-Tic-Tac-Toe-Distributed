@@ -42,6 +42,7 @@ public class WelcomeController {
         if (username.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setContentText("Please enter a valid username.");
+            alert.initOwner(SceneHandler.getStage()); // centers the alert
             alert.show();
             return;
         }
@@ -65,6 +66,7 @@ public class WelcomeController {
             alert.setContentText(
                     "Could not connect to the router. Make sure the router is running."
             );
+            alert.initOwner(SceneHandler.getStage()); // centers the alert
             alert.show();
 
             e.printStackTrace();

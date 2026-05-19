@@ -97,6 +97,7 @@ public class LobbyController {
                 alert.setContentText(
                         "Failed to Subscribe to " + LOBBY + "."
                 );
+                alert.initOwner(SceneHandler.getStage()); // centers the alert
                 alert.show();
 
                 e.printStackTrace();
@@ -171,6 +172,7 @@ public class LobbyController {
         Platform.runLater(() -> {
             Alert gameFullAlert = new Alert(AlertType.WARNING);
             gameFullAlert.setContentText("Game is currently full. Please join other game");
+            gameFullAlert.initOwner(SceneHandler.getStage()); // centers the alert
             gameFullAlert.show();
 
             statusLabel.setText("");
@@ -191,7 +193,7 @@ public class LobbyController {
                 gameNotFound.getGameId() +
                 "' was not found.\nWould you like to create a new game with this ID?"
             );
-
+            alert.initOwner(SceneHandler.getStage()); // centers the alert
             ButtonType yesButton = new ButtonType("Yes");
             ButtonType noButton = new ButtonType("No");
 

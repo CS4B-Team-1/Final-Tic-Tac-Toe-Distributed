@@ -2,8 +2,6 @@ package project.player.controller;
 
 import java.io.IOException;
 
-import javax.lang.model.util.AbstractAnnotationValueVisitorPreview;
-
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -153,6 +151,7 @@ public class BoardController {
             Alert alert = new Alert(AlertType.ERROR);
             alert.setContentText("BoardController client could not connect to the server");
             alert.setOnCloseRequest((event) -> { handleGameExit(); });
+            alert.initOwner(SceneHandler.getStage()); // centers the alert
             alert.show();
             e.printStackTrace();
         }
@@ -194,14 +193,15 @@ public class BoardController {
             Alert alert = new Alert(AlertType.ERROR);
             alert.setContentText("Invalid game state, exit current game");
             alert.setOnCloseRequest((event) -> { handleGameExit(); });
+            alert.initOwner(SceneHandler.getStage()); // centers the alert
             alert.show();
         } else {
             if (gameStatus == GameStatus.PLAYER_X_WIN) {
-                dispayWinnerCheck(this.playerSymbol.equals(PLAYER_X) ? "win" : "loss");
+                dispayWinnerCheck(this.playerSymbol.equals(PLAYER_X) ? PLAYER_X + " wins!" : PLAYER_O + " loses");
             } else if (gameStatus == GameStatus.PLAYER_O_WIN) {
-                dispayWinnerCheck(this.playerSymbol.equals(PLAYER_O) ? "win" : "loss");
+                dispayWinnerCheck(this.playerSymbol.equals(PLAYER_O) ? PLAYER_O + " wins!" : PLAYER_X + " loses");
             } else {
-                dispayWinnerCheck("draw");
+                dispayWinnerCheck("Draw");
             }
         }
     }
@@ -249,6 +249,7 @@ public class BoardController {
         }
  
         alert.setContentText(reasonMessage);
+        alert.initOwner(SceneHandler.getStage()); // centers the alert
         alert.show();
     }
 
@@ -261,6 +262,7 @@ public class BoardController {
             alert.setTitle("Notification");
             alert.setHeaderText("Game Ended");
             alert.setContentText("Opponent has left the game.");
+            alert.initOwner(SceneHandler.getStage()); // centers the alert
             alert.showAndWait();
         });
         try {
@@ -269,13 +271,6 @@ public class BoardController {
             // Bring player back to lobby
             Platform.runLater(() -> {
                 SceneHandler.getStage().setScene(getLobbyScene());
-                // try {
-                //     FXMLLoader loader = new FXMLLoader(getClass().getResource("..\\fxml\\LobbyScene.fxml"));
-                //     SceneHandler.getStage().setScene(getLobbyScene());
-                // } catch (IOException e) {
-                //     System.out.println("ERROR: exitGame Screen Switch Failed!");
-                //     System.out.println(e.getMessage());
-                // }
             });
         } catch (Exception e) {
             System.out.println("ERROR: exitGame Failed!");
@@ -469,6 +464,14 @@ public class BoardController {
                 outcomePopupController.setWinner(outcomeString);
                 // sets up popup to unsubscribe and clean up when closed
                 outcomePopup.setOnHidden(hiddenEvent -> handleGameExit());
+
+                // center the popup
+                outcomePopup.setOnShown((event) -> {
+                    Stage owner = SceneHandler.getStage();
+                    outcomePopup.setX(owner.getX() + (owner.getWidth()  - outcomePopup.getWidth())  / 2.0);
+                    outcomePopup.setY(owner.getY() + (owner.getHeight() - outcomePopup.getHeight()) / 2.0);
+                });
+
                 // display popup
                 outcomePopup.show();
 
